@@ -633,6 +633,21 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
+// Serve simple dashboard
+app.get('/dashboard-simple', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard-simple.html'));
+});
+
+// Serve admin dashboard with extended features
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Serve remarketing dashboard
+app.get('/remarketing-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'remarketing-dashboard.html'));
+});
+
 // Combined dashboard data endpoint for real data
 app.get('/api/dashboard-data', (req, res) => {
     const period = req.query.days || '7';
