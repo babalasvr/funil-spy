@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Relatório de Leads</title>
+    
+    <!-- UTM Tracking Script -->
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1d4ed8;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stat-card-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .stat-card-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .stat-change-positive {
+            color: var(--success-green);
+        }
+
+        .stat-change-negative {
+            color: var(--danger-red);
+        }
+
+        /* Controls */
+        .dashboard-controls {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 32px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .control-input, .control-select {
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+            background: var(--white);
+        }
+
+        .control-input:focus, .control-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-blue-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        /* Data Table */
+        .data-table-container {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .data-table-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .data-table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: var(--gray-50);
+            padding: 16px;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-pending {
+            background: var(--warning-orange);
+            color: white;
+        }
+
+        .status-converted {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .status-abandoned {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        .status-active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        /* Device badges */
+        .device-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .device-mobile {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .device-desktop {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--gray-500);
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--gray-300);
+            border-top: 2px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Auto-refresh indicator */
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Export button */
+        .export-btn {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .export-btn:hover {
+            background: #059669;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 16px;
+            }
+
+            .dashboard-header {
+                padding: 24px;
+                text-align: center;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table-container {
+                overflow-x: auto;
+            }
+
+            .data-table {
+                min-width: 800px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1>📊 Dashboard de Leads</h1>
+            <p>Monitoramento completo do funil de conversão - Dados em tempo real</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Total de Leads</div>
+                    <div class="stat-card-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary-blue);">
+                        👥
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalLeads">-</div>
+                <div class="stat-card-change stat-change-positive" id="leadsChange">
+                    ↗ +0% últimas 24h
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Conversões</div>
+                    <div class="stat-card-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-green);">
+                        💰
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalConversions">-</div>
+                <div class="stat-card-change stat-change-positive" id="conversionsChange">
+                    ↗ +0% últimas 24h
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Taxa de Conversão</div>
+                    <div class="stat-card-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-orange);">
+                        📈
+                    </div>
+                </div>
+                <div class="stat-card-value" id="conversionRate">-</div>
+                <div class="stat-card-change" id="conversionRateChange">
+                    Meta: 5%
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Receita Total</div>
+                    <div class="stat-card-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger-red);">
+                        💳
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalRevenue">-</div>
+                <div class="stat-card-change stat-change-positive" id="revenueChange">
+                    ↗ +0% últimas 24h
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Usuários Online</div>
+                    <div class="stat-card-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary-blue);">
+                        🔴
+                    </div>
+                </div>
+                <div class="stat-card-value" id="activeUsers">-</div>
+                <div class="stat-card-change">
+                    Últimos 5 min
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-title">Números Investigados</div>
+                    <div class="stat-card-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-green);">
+                        📱
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalInvestigations">-</div>
+                <div class="stat-card-change">
+                    Hoje
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="dashboard-controls">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">Período</label>
+                    <select class="control-select" id="periodFilter">
+                        <option value="24h">Últimas 24 horas</option>
+                        <option value="7d" selected>Últimos 7 dias</option>
+                        <option value="30d">Últimos 30 dias</option>
+                        <option value="all">Todos os dados</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Status</label>
+                    <select class="control-select" id="statusFilter">
+                        <option value="all">Todos</option>
+                        <option value="pending">Pendente</option>
+                        <option value="converted">Convertido</option>
+                        <option value="abandoned">Abandonado</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Buscar</label>
+                    <input type="text" class="control-input" placeholder="E-mail, telefone, nome..." id="searchInput">
+                </div>
+
+                <div class="control-group">
+                    <button class="btn btn-primary" onclick="loadDashboardData()">
+                        🔄 Atualizar
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn export-btn" onclick="exportData()">
+                        📥 Exportar CSV
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <div class="refresh-indicator">
+                        <div class="refresh-dot"></div>
+                        Atualizando automaticamente
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table-container">
+            <div class="data-table-header">
+                <div class="data-table-title">📋 Detalhes dos Leads</div>
+                <div style="font-size: 0.875rem; color: var(--gray-600);">
+                    <span id="tableCount">0</span> registros encontrados
+                </div>
+            </div>
+
+            <div id="loadingState" class="loading">
+                <div class="loading-spinner"></div>
+                Carregando dados do dashboard...
+            </div>
+
+            <table class="data-table" id="leadsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Dados do Lead</th>
+                        <th>Número Investigado</th>
+                        <th>Funil</th>
+                        <th>Origem</th>
+                        <th>Dispositivo</th>
+                        <th>Status</th>
+                        <th>Receita</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTableBody">
+                    <!-- Dados serão inseridos dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="admin-dashboard.js"></script>
+    
+    <!-- Analytics Navigation -->
+    <script src="navigation.js"></script>
+    
+    <!-- Pixel Tracking Script -->
+    <script>
+      window.pixelId = "66ac66dd43136b1d66bddb65";
+      var a = document.createElement("script");
+      a.setAttribute("async", "");
+      a.setAttribute("defer", "");
+      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+      document.head.appendChild(a);
+    </script>
+</body>
+</html>

@@ -189,6 +189,242 @@ function updateSession(sessionId, pageUrl, utmParams, deviceType) {
     });
 }
 
+// Dashboard API Endpoints
+// Get dashboard stats
+app.get('/api/stats', (req, res) => {
+    const { period = '7d' } = req.query;
+    
+    let daysCutoff = 7;
+    if (period === '24h') daysCutoff = 1;
+    else if (period === '30d') daysCutoff = 30;
+    else if (period === 'all') daysCutoff = 365;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
+    
+    // Get sessions and conversions for the period
+    db.all(`SELECT COUNT(*) as totalSessions FROM sessions WHERE created_at >= ?`, [cutoffDate.toISOString()], (err, sessionRows) => {
+        if (err) {
+            console.error('Error getting session stats:', err);
+            return res.status(500).json({ error: 'Failed to get stats' });
+        }
+        
+        db.all(`SELECT COUNT(*) as totalConversions, SUM(value) as totalRevenue FROM conversions WHERE timestamp >= ?`, [cutoffDate.toISOString()], (err, conversionRows) => {
+            if (err) {
+                console.error('Error getting conversion stats:', err);
+                return res.status(500).json({ error: 'Failed to get stats' });
+            }
+            
+            // Get active users (last 5 minutes)
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            db.all(`SELECT COUNT(DISTINCT session_id) as activeUsers FROM events WHERE timestamp >= ?`, [fiveMinutesAgo.toISOString()], (err, activeRows) => {
+                if (err) {
+                    console.error('Error getting active users:', err);
+                    return res.status(500).json({ error: 'Failed to get stats' });
+                }
+                
+                // Get investigations (numbers searched)
+                db.all(`SELECT COUNT(*) as totalInvestigations FROM events WHERE event_name = 'phone_search' AND timestamp >= ?`, [cutoffDate.toISOString()], (err, investigationRows) => {
+                    if (err) {
+                        console.error('Error getting investigations:', err);
+                        return res.status(500).json({ error: 'Failed to get stats' });
+                    }
+                    
+                    const totalSessions = sessionRows[0]?.totalSessions || 0;
+                    const totalConversions = conversionRows[0]?.totalConversions || 0;
+                    const totalRevenue = conversionRows[0]?.totalRevenue || 0;
+                    const activeUsers = activeRows[0]?.activeUsers || 0;
+                    const totalInvestigations = investigationRows[0]?.totalInvestigations || 0;
+                    
+                    const conversionRate = totalSessions > 0 ? ((totalConversions / totalSessions) * 100).toFixed(1) : 0;
+                    
+                    // Calculate changes (mock data for now)
+                    const stats = {
+                        totalLeads: totalSessions,
+                        totalConversions,
+                        conversionRate: parseFloat(conversionRate),
+                        totalRevenue,
+                        activeUsers,
+                        totalInvestigations,
+                        leadsChange: Math.floor(Math.random() * 20) - 5,
+                        conversionsChange: Math.floor(Math.random() * 15) - 3,
+                        revenueChange: Math.floor(Math.random() * 25) - 8
+                    };
+                    
+                    res.json(stats);
+                });
+            });
+        });
+    });
+});
+
+// Get leads data
+app.get('/api/leads', (req, res) => {
+    const { period = '7d' } = req.query;
+    
+    let daysCutoff = 7;
+    if (period === '24h') daysCutoff = 1;
+    else if (period === '30d') daysCutoff = 30;
+    else if (period === 'all') daysCutoff = 365;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
+    
+    const query = `
+        SELECT 
+            s.session_id,
+            s.created_at,
+            s.first_page,
+            s.last_page,
+            s.total_events,
+            s.converted,
+            s.utm_source,
+            s.utm_medium,
+            s.utm_campaign,
+            s.device_type,
+            c.value as revenue,
+            c.customer_data,
+            c.order_bump,
+            c.timestamp as conversion_date,
+            GROUP_CONCAT(e.event_name) as events_list,
+            e.browser,
+            e.os,
+            e.properties
+        FROM sessions s
+        LEFT JOIN conversions c ON s.session_id = c.session_id
+        LEFT JOIN events e ON s.session_id = e.session_id
+        WHERE s.created_at >= ?
+        GROUP BY s.session_id
+        ORDER BY s.created_at DESC
+        LIMIT 1000
+    `;
+    
+    db.all(query, [cutoffDate.toISOString()], (err, rows) => {
+        if (err) {
+            console.error('Error getting leads data:', err);
+            return res.status(500).json({ error: 'Failed to get leads' });
+        }
+        
+        const leads = rows.map(row => {
+            let customerData = {};
+            let properties = {};
+            
+            try {
+                customerData = row.customer_data ? JSON.parse(row.customer_data) : {};
+            } catch (e) {
+                console.warn('Failed to parse customer_data:', e);
+            }
+            
+            try {
+                properties = row.properties ? JSON.parse(row.properties) : {};
+            } catch (e) {
+                console.warn('Failed to parse properties:', e);
+            }
+            
+            return {
+                session_id: row.session_id,
+                created_at: row.created_at,
+                name: customerData.name || properties.name || null,
+                email: customerData.email || properties.email || null,
+                phone: customerData.phone || properties.phone || null,
+                cpf: customerData.cpf || properties.cpf || null,
+                investigated_number: properties.investigated_number || properties.numeroClonado || null,
+                target_type: properties.alvoMonitoramento || null,
+                whatsapp_photo: properties.fotoperfil ? true : false,
+                funnel_steps: row.events_list ? row.events_list.split(',') : [],
+                pages_visited: row.total_events || 0,
+                utm_source: row.utm_source,
+                utm_medium: row.utm_medium,
+                utm_campaign: row.utm_campaign,
+                device_type: row.device_type,
+                browser: row.browser,
+                os: row.os,
+                converted: Boolean(row.converted),
+                abandoned: !row.converted && row.total_events > 3,
+                active: !row.converted && row.total_events > 0 && (new Date() - new Date(row.created_at)) < 24 * 60 * 60 * 1000,
+                conversion_date: row.conversion_date,
+                revenue: row.revenue || 0,
+                order_bump: Boolean(row.order_bump)
+            };
+        });
+        
+        res.json(leads);
+    });
+});
+
+// Enhanced track event endpoint with localStorage data
+app.post('/api/track-enhanced', (req, res) => {
+    const {
+        sessionId,
+        eventName,
+        properties = {},
+        pageUrl,
+        pageTitle,
+        userAgent,
+        screenWidth,
+        screenHeight,
+        localStorageData = {}
+    } = req.body;
+
+    // Merge localStorage data with properties
+    const enhancedProperties = {
+        ...properties,
+        ...localStorageData,
+        // Extract specific localStorage keys
+        alvoMonitoramento: localStorageData.alvoMonitoramento,
+        numeroClonado: localStorageData.numeroClonado,
+        fotoperfil: localStorageData.fotoperfil,
+        Status: localStorageData.Status,
+        customerData: localStorageData.customerData ? JSON.parse(localStorageData.customerData || '{}') : {},
+        currentTransaction: localStorageData.currentTransaction ? JSON.parse(localStorageData.currentTransaction || '{}') : {}
+    };
+
+    // Extract UTM parameters
+    const utmParams = {
+        utm_source: enhancedProperties.utm_source || null,
+        utm_medium: enhancedProperties.utm_medium || null,
+        utm_campaign: enhancedProperties.utm_campaign || null,
+        utm_term: enhancedProperties.utm_term || null,
+        utm_content: enhancedProperties.utm_content || null
+    };
+
+    // Device detection
+    const deviceType = /Mobile|Android|iPhone|iPad/.test(userAgent) ? 'mobile' : 'desktop';
+    const browser = userAgent.includes('Chrome') ? 'Chrome' : 
+                   userAgent.includes('Firefox') ? 'Firefox' : 
+                   userAgent.includes('Safari') ? 'Safari' : 'Other';
+    const os = userAgent.includes('Windows') ? 'Windows' :
+               userAgent.includes('Mac') ? 'macOS' :
+               userAgent.includes('Android') ? 'Android' :
+               userAgent.includes('iPhone') ? 'iOS' : 'Other';
+
+    // Insert event with enhanced data
+    const stmt = db.prepare(`INSERT INTO events (
+        session_id, event_name, page_url, page_title, properties,
+        utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+        device_type, browser, os, screen_width, screen_height,
+        ip_address, user_agent
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+    stmt.run([
+        sessionId, eventName, pageUrl, pageTitle, JSON.stringify(enhancedProperties),
+        utmParams.utm_source, utmParams.utm_medium, utmParams.utm_campaign,
+        utmParams.utm_term, utmParams.utm_content,
+        deviceType, browser, os, screenWidth, screenHeight,
+        req.ip, userAgent
+    ], function(err) {
+        if (err) {
+            console.error('Error inserting enhanced event:', err);
+            return res.status(500).json({ error: 'Failed to track event' });
+        }
+
+        // Update or create session
+        updateSession(sessionId, pageUrl, utmParams, deviceType);
+        
+        res.json({ success: true, eventId: this.lastID });
+    });
+});
+
 // Track conversion endpoint
 app.post('/api/conversion', (req, res) => {
     const {
