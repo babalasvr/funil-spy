@@ -1029,9 +1029,9 @@
             };
         })();
         
-        // ExpfyPay API Configuration - Obfuscated
-        const EXPFY_CONFIG = window._protected.config;
-        const DEMO_MODE = window._protected.demo;
+        // ExpfyPay API Configuration - Production Mode
+        const PRODUCTION_MODE = true; // Set to true for production
+        const PAYMENT_API_URL = window.location.protocol + '//' + window.location.hostname + '/api/payment';
         
         let currentTransaction = window._protected.transaction;
         let pixCode = window._protected.pixCode;
@@ -1220,8 +1220,26 @@
 
                 let result;
                 
-                if (DEMO_MODE) {
-                    // Demo mode - simulate API response
+                if (PRODUCTION_MODE) {
+                    // Production mode - use secure payment API
+                    console.log('PRODUCTION MODE: Creating real payment via API');
+                    
+                    const response = await fetch(`${PAYMENT_API_URL}/create-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(paymentData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
+                    }
+
+                    result = await response.json();
+                } else {
+                    // Demo mode - simulate API response (fallback)
                     console.log('DEMO MODE: Simulating ExpfyPay API response');
                     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
                     
@@ -1231,14 +1249,11 @@
                             transaction_id: 'demo_' + Date.now(),
                             external_id: paymentData.external_id,
                             qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426655440000520400005303986540597.005802BR5913NOME COMPLETO6008SAOPAULO62070503***63041234',
-                            qr_code_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9ImJsYWNrIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UVIgQ09ERSBERUVNTXN0cmF0aXZvPC90ZXh0Pjwvc3ZnPg==',
+                            qr_code_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9ImJsYWNrIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UVIgQ09ERSRERUVNTXN0cmF0aXZvPC90ZXh0Pjwvc3ZnPg==',
                             amount: totalPrice,
                             status: 'pending'
                         }
                     };
-                } else {
-                    // Production mode requires secure backend integration
-                    throw new Error('Production mode requires secure backend integration. Secret keys cannot be exposed in client-side code.');
                 }
                 console.log('Payment response:', result);
 
@@ -1304,15 +1319,35 @@
             // This would normally check payment status via webhook or polling
             console.log('Starting payment status check for transaction:', currentTransaction.transaction_id);
             
-            // Simulate payment confirmation (shorter time in demo mode)
-            const confirmationTime = DEMO_MODE ? 10000 : 30000; // 10s in demo, 30s in production
+            // Use production timing - real payment confirmation
+            const confirmationTime = PRODUCTION_MODE ? 60000 : 10000; // 60s in production, 10s in demo
             
-            setTimeout(() => {
-                // In a real implementation, this would come from webhook
-                simulatePaymentConfirmed();
-            }, confirmationTime);
-            
-            if (DEMO_MODE) {
+            // Start polling for payment status every 10 seconds
+            if (PRODUCTION_MODE) {
+                const statusCheckInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`${PAYMENT_API_URL}/payment-status/${currentTransaction.transaction_id}`);
+                        const statusResult = await response.json();
+                        
+                        if (statusResult.success && statusResult.data.status === 'paid') {
+                            clearInterval(statusCheckInterval);
+                            simulatePaymentConfirmed();
+                        }
+                    } catch (error) {
+                        console.error('Status check error:', error);
+                    }
+                }, 10000); // Check every 10 seconds
+                
+                // Stop checking after 15 minutes
+                setTimeout(() => {
+                    clearInterval(statusCheckInterval);
+                }, 900000);
+            } else {
+                // Demo mode - auto confirm after delay
+                setTimeout(() => {
+                    simulatePaymentConfirmed();
+                }, confirmationTime);
+                
                 showStatusMessage('🔧 MODO DEMONSTRAÇÃO: Pagamento será confirmado automaticamente em 10 segundos', 'info');
             }
         }
@@ -1598,6 +1633,7 @@
                 e.target.value = value;
             });
 
+            
             // Form Submit
             if (form) {
                 form.addEventListener('submit', function(e) {

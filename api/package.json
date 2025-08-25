@@ -1,0 +1,29 @@
+{
+  "name": "funil-spy-payment-api",
+  "version": "1.0.0",
+  "description": "Secure payment API for Funil Spy checkout",
+  "main": "payment.js",
+  "scripts": {
+    "start": "node payment.js",
+    "dev": "nodemon payment.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "payment",
+    "api",
+    "expfypay",
+    "pix",
+    "checkout"
+  ],
+  "author": "Funil Spy",
+  "license": "ISC"
+}
