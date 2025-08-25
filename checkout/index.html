@@ -1258,15 +1258,17 @@
                 console.log('Payment response:', result);
 
                 if (result.success && result.data) {
-                    currentTransaction = result.data;
-                    pixCode = result.data.qr_code;
+                    // Handle nested response structure from ExpfyPay API
+                    const paymentData = result.data.data || result.data;
+                    currentTransaction = paymentData;
+                    pixCode = paymentData.qr_code;
                     
                     // Store transaction data
                     localStorage.setItem('currentTransaction', JSON.stringify(currentTransaction));
                     localStorage.setItem('customerData', JSON.stringify(formData));
                     
                     // Show QR Code
-                    showQRCode(result.data);
+                    showQRCode(paymentData);
                     
                     // Start checking payment status
                     startPaymentStatusCheck();
