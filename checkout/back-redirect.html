@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPERE! Oferta Especial</title>
+    <script src="../analytics/public/tracking.js"></script>
+    <meta name="robots" content="noindex">
+    <script disable-devtool-auto="" src="https://cdn.jsdelivr.net/npm/disable-devtool" url="https://youtu.be/3W4aWnPoRy8?si=jUzCI55TpmEXM3Yw"></script>
+    <style>
+        :root {
+            --primary-green: #25D366;
+            --dark-green: #128C7E;
+            --danger: #ff3b30;
+            --warning: #ffcc00;
+            --success: #34c759;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --white: #ffffff;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .urgency-badge {
+            background: rgba(255,215,0,0.95);
+            color: #000;
+            padding: 10px 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 25px;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .offer-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+            border: 3px solid #e74c3c;
+            position: relative;
+        }
+
+        .offer-card::before {
+            content: "🔥 OFERTA RELÂMPAGO";
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .offer-title {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .offer-title h2 {
+            color: #e74c3c;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .offer-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .price-comparison {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .old-price {
+            font-size: 1.5rem;
+            text-decoration: line-through;
+            color: var(--text-light);
+        }
+
+        .new-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .discount-badge {
+            background: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .order-bump-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .order-bump-section::before {
+            content: "💎 BÔNUS ESPECIAL";
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #f39c12;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .order-bump-content {
+            padding-top: 10px;
+        }
+
+        .order-bump-price {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .order-bump-old {
+            font-size: 1rem;
+            text-decoration: line-through;
+            color: var(--text-light);
+        }
+
+        .order-bump-new {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f39c12;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            padding: 5px;
+        }
+
+        .features-list li::before {
+            content: "✅";
+            font-size: 1rem;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .total-comparison {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .total-old {
+            font-size: 1.2rem;
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        .total-new {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .checkout-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 18px 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .timer-section {
+            background: rgba(255, 107, 107, 0.1);
+            border: 2px solid rgba(255, 107, 107, 0.5);
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .guarantee {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(52, 199, 89, 0.1);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .price-comparison {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .new-price {
+                font-size: 2rem;
+            }
+
+            .checkout-btn {
+                font-size: 1.1rem;
+                padding: 16px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🛑 ESPERE! NÃO SAIA AINDA!</h1>
+        <p>Você está prestes a perder uma oportunidade única...</p>
+        <div class="urgency-badge">
+            ⏰ Esta oferta expira em poucos minutos!
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="offer-card">
+            <div class="offer-title">
+                <h2>OFERTA ESPECIAL PARA VOCÊ!</h2>
+                <p class="offer-subtitle">Como você demonstrou interesse, liberamos um desconto exclusivo</p>
+            </div>
+
+            <div class="price-comparison">
+                <span class="old-price">De R$ 27,90</span>
+                <span class="new-price">R$ 14,90</span>
+                <span class="discount-badge">47% OFF</span>
+            </div>
+
+            <ul class="features-list">
+                <li>Acesso Premium Completo ao WhatsApp Spy</li>
+                <li>Monitoramento de conversas em tempo real</li>
+                <li>Detecção de mensagens arquivadas e excluídas</li>
+                <li>Relatórios detalhados de atividades</li>
+                <li>Suporte técnico especializado</li>
+                <li>Garantia de 7 dias ou seu dinheiro de volta</li>
+            </ul>
+        </div>
+
+        <div class="order-bump-section">
+            <div class="order-bump-content">
+                <h3 style="text-align: center; color: #d35400; margin-bottom: 15px;">
+                    ADICIONE: Suporte VIP + Atualizações
+                </h3>
+                
+                <div class="order-bump-price">
+                    <span class="order-bump-old">De R$ 19,90</span>
+                    <span class="order-bump-new">+ R$ 9,90</span>
+                    <span style="background: #e74c3c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">50% OFF</span>
+                </div>
+
+                <ul class="features-list" style="font-size: 0.9rem;">
+                    <li>Suporte VIP via WhatsApp (resposta em até 2h)</li>
+                    <li>Todas as atualizações futuras grátis</li>
+                    <li>Acesso ao grupo VIP exclusivo</li>
+                    <li>Suporte técnico prioritário</li>
+                </ul>
+                
+                <label style="display: flex; align-items: center; gap: 12px; background: #27ae60; color: white; padding: 12px 15px; border-radius: 8px; cursor: pointer; margin-top: 15px;">
+                    <input type="checkbox" id="orderBumpCheck" style="width: 18px; height: 18px; margin: 0;" checked>
+                    <span style="font-weight: 600; font-size: 0.95rem;">
+                        ✅ SIM! Eu quero adicionar o Suporte VIP por apenas +R$ 9,90
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="total-section">
+            <h3>💰 VALOR TOTAL COM DESCONTO</h3>
+            <div class="total-comparison">
+                <span class="total-old">De R$ 47,80</span>
+                <span class="total-new">R$ 24,80</span>
+            </div>
+            <p>Economia total de R$ 23,00!</p>
+        </div>
+
+        <div class="timer-section">
+            ⏳ Esta oferta expira em: <span class="timer" id="timer">09:59</span>
+        </div>
+
+        <a href="index.html" class="checkout-btn" id="checkoutBtn">
+            🔥 QUERO APROVEITAR ESTA OFERTA POR R$ 14,90
+        </a>
+
+        <div class="guarantee">
+            🛡️ <strong>Garantia Total:</strong> 7 dias para testar. Não gostou? Devolvemos 100% do seu dinheiro!
+        </div>
+    </div>
+
+    <script>
+        // Timer countdown
+        function startTimer() {
+            let timeLeft = 10 * 60; // 10 minutes
+            const timerElement = document.getElementById('timer');
+            
+            function updateTimer() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timerElement) {
+                    timerElement.textContent = formattedTime;
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    // Redirect back to normal checkout after timer expires
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                timeLeft--;
+            }
+            
+            updateTimer();
+            const timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // UTM parameter preservation and order bump handling
+        document.addEventListener('DOMContentLoaded', function() {
+            startTimer();
+            
+            // Order bump checkbox handling
+            const orderBumpCheck = document.getElementById('orderBumpCheck');
+            const totalOld = document.querySelector('.total-old');
+            const totalNew = document.querySelector('.total-new');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            
+            function updateTotal() {
+                if (orderBumpCheck.checked) {
+                    totalOld.textContent = 'De R$ 47,80';
+                    totalNew.textContent = 'R$ 24,80';
+                    checkoutBtn.innerHTML = '🔥 QUERO APROVEITAR ESTA OFERTA POR R$ 24,80';
+                } else {
+                    totalOld.textContent = 'De R$ 27,90';
+                    totalNew.textContent = 'R$ 14,90';
+                    checkoutBtn.innerHTML = '🔥 QUERO APROVEITAR ESTA OFERTA POR R$ 14,90';
+                }
+            }
+            
+            orderBumpCheck.addEventListener('change', updateTotal);
+            updateTotal(); // Initialize with correct values
+            
+            // Preserve UTM parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.toString() && checkoutBtn) {
+                const href = checkoutBtn.getAttribute('href');
+                const separator = href.includes('?') ? '&' : '?';
+                let newHref = href + separator + urlParams.toString() + '&special_offer=true';
+                
+                // Add order bump parameter when checked
+                checkoutBtn.addEventListener('click', function() {
+                    if (orderBumpCheck.checked) {
+                        newHref += '&order_bump=true';
+                    }
+                    checkoutBtn.setAttribute('href', newHref);
+                });
+                
+                checkoutBtn.setAttribute('href', newHref);
+            }
+        });
+
+        // Prevent multiple redirects
+        let isRedirecting = false;
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'checkoutBtn' && !isRedirecting) {
+                isRedirecting = true;
+            }
+        });
+    </script>
+
+    <!-- UTM and Pixel Scripts -->
+    <script src="../relatorio/js/latest.js" data-utmify-prevent-xcod-sck="" data-utmify-prevent-subids="" async="" defer=""></script>
+    <script>
+        window.pixelId = "66f46e9a69e84de401f8772f";
+        var a = document.createElement("script");
+        a.setAttribute("async", "");
+        a.setAttribute("defer", "");
+        a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+        document.head.appendChild(a);
+    </script>
+</body>
+</html>

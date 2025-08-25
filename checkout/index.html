@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/core.js"></script>
+    
+    <!-- Checkout Back Button Redirect Script -->
+    <script>
+        // Back button redirect functionality for checkout
+        (function() {
+            let isRedirecting = false;
+            let hasStartedCheckout = false;
+            
+            // Track if user has started filling the form
+            document.addEventListener('DOMContentLoaded', function() {
+                const formInputs = document.querySelectorAll('.form-input');
+                formInputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        hasStartedCheckout = true;
+                    });
+                });
+            });
+            
+            // Push a dummy state to enable back button detection
+            if (window.history && window.history.pushState) {
+                window.history.pushState('forward', null, window.location.href);
+                
+                window.addEventListener('popstate', function() {
+                    if (!isRedirecting && hasStartedCheckout) {
+                        isRedirecting = true;
+                        // Preserve UTM parameters
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const backRedirectUrl = 'back-redirect.html' + 
+                            (urlParams.toString() ? '?' + urlParams.toString() : '');
+                        window.location.href = backRedirectUrl;
+                    }
+                });
+            }
+            
+            // Handle beforeunload for users who started checkout
+            window.addEventListener('beforeunload', function(e) {
+                if (!hasStartedCheckout || isRedirecting) return;
+                
+                const confirmationMessage = 'Espere! Temos uma oferta especial para você!';
+                e.returnValue = confirmationMessage;
+                return confirmationMessage;
+            });
+        })();
+    </script>
+    <title>Checkout - Acesso Premium</title>
+    <script src="../analytics/public/tracking.js"></script>
+    <style>
+        :root {
+            --primary-green: #25D366;
+            --dark-green: #128C7E;
+            --light-green: #DCF8C6;
+            --background-color: #f5f5f5;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --white: #ffffff;
+            --danger: #ff3b30;
+            --warning: #ffcc00;
+            --success: #34c759;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .step.active {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--text-light);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background-color: var(--primary-green);
+        }
+
+        .step.completed .step-number {
+            background-color: var(--success);
+        }
+
+        .step-arrow {
+            margin: 0 15px;
+            color: var(--text-light);
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--dark-green);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-green);
+        }
+
+        .form-input.error {
+            border-color: var(--danger);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Price Display */
+        .price-display {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .price-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .price-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .price-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background-color: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            display: none;
+            text-align: center;
+        }
+
+        .qr-section.active {
+            display: block;
+        }
+
+        .qr-code-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin: 20px 0;
+            display: inline-block;
+        }
+
+        .qr-code-image {
+            width: 250px;
+            height: 250px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .pix-instructions {
+            background-color: var(--light-green);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+
+        .pix-instructions h3 {
+            color: var(--dark-green);
+            margin-bottom: 15px;
+        }
+
+        .pix-instructions ol {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .pix-instructions li {
+            margin-bottom: 8px;
+        }
+
+        .copy-code-btn {
+            background-color: var(--dark-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .copy-code-btn:hover {
+            background-color: #0d6b5e;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Purchase Notification - Unified Mobile-Optimized Style */
+
+        /* Order Bump Section */
+        .order-bump {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);
+        }
+
+        .order-bump::before {
+            content: "🔥 OFERTA ESPECIAL";
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .order-bump-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-top: 10px;
+        }
+
+        .order-bump-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 3px 10px rgba(243, 156, 18, 0.3);
+        }
+
+        .order-bump-content h3 {
+            margin: 0 0 5px 0;
+            color: #d35400;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .order-bump-content p {
+            margin: 0;
+            color: #8b4513;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .order-bump-offer {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+
+        .order-bump-price {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .order-bump-original {
+            font-size: 0.9rem;
+            text-decoration: line-through;
+            color: #7f8c8d;
+        }
+
+        .order-bump-discount {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .order-bump-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #27ae60;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .order-bump-checkbox:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+
+        .order-bump-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+
+        .order-bump-checkbox-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .order-bump-features {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .order-bump-features li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+            font-size: 0.85rem;
+            color: #5d4037;
+        }
+
+        .order-bump-features li::before {
+            content: "✅";
+            font-size: 0.8rem;
+        }
+        
+        /* Enhanced Social Proof System - Mobile Optimized */
+        .social-proof-container {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        
+        /* Online Counter - Top Left Mobile (away from scroll) */
+        .online-counter {
+            position: fixed;
+            top: 30px;
+            left: 10px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+            animation: pulse-glow 4s infinite;
+            z-index: 1000;
+            opacity: 0.9;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); box-shadow: 0 3px 10px rgba(39, 174, 96, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.6); }
+        }
+        
+        /* Discoveries Counter - Top Right, Smaller */
+        .discoveries-counter {
+            position: fixed;
+            top: 30px;
+            right: 10px;
+            background: white;
+            border: 1px solid #e74c3c;
+            border-radius: 6px;
+            padding: 4px 6px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 60px;
+            opacity: 0.9;
+        }
+        
+        .discoveries-number {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e74c3c;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        
+        .discoveries-label {
+            font-size: 0.6rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+        
+        .purchase-notification {
+            position: fixed !important;
+            bottom: 25px !important;
+            left: 15px !important;
+            right: 15px !important;
+            background: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            border-left: 3px solid #27ae60;
+            transform: translateY(100px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 0.72rem;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .purchase-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        
+        .notification-icon {
+            width: 20px;
+            height: 20px;
+            background: #27ae60;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            color: #27ae60;
+            font-size: 0.8rem;
+        }
+        
+        .notification-content {
+            color: #495057;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        
+        .notification-time {
+            color: #6c757d;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+        
+        /* Activity Ticker - Very Top, Thinner */
+        .activity-ticker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 2px 0;
+            font-size: 0.65rem;
+            text-align: center;
+            z-index: 1000;
+            overflow: hidden;
+            white-space: nowrap;
+            opacity: 0.9;
+        }
+        
+        .activity-text {
+            animation: scroll-ticker 20s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes scroll-ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .online-counter {
+                top: 25px;
+                left: 5px;
+                font-size: 0.65rem;
+                padding: 4px 8px;
+            }
+            
+            .discoveries-counter {
+                top: 25px;
+                right: 5px;
+                padding: 3px 5px;
+                min-width: 55px;
+            }
+            
+            .discoveries-number {
+                font-size: 0.9rem;
+            }
+            
+            .discoveries-label {
+                font-size: 0.5rem;
+            }
+            
+            .purchase-notification {
+                bottom: 20px !important;
+                left: 12px !important;
+                right: 12px !important;
+                padding: 8px 10px;
+                font-size: 0.68rem;
+                border-radius: 6px;
+            }
+            
+            .notification-icon {
+                width: 18px;
+                height: 18px;
+                font-size: 0.7rem;
+            }
+            
+            .activity-ticker {
+                font-size: 0.6rem;
+                padding: 1px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Social Proof Elements -->
+    <div class="activity-ticker">
+        <div class="activity-text" id="activityText">
+            🔥 ATIVIDADE: Maria descobriu traição em SP • João confirmou suspeitas no RJ • Ana encontrou evidências em BH • Carlos verificou em BSB...
+        </div>
+    </div>
+    
+    <div class="online-counter" id="onlineCounter">
+        🟢 <span id="onlineCount">247</span> verificando agora
+    </div>
+    
+    <div class="discoveries-counter">
+        <div class="discoveries-number" id="discoveriesCount">1,847</div>
+        <div class="discoveries-label">Traições<br>Descobertas</div>
+    </div>
+    
+    <div class="purchase-notification" id="purchaseNotification">
+        <div class="notification-header">
+            <div class="notification-icon">🔍</div>
+            <div class="notification-title">Verificação Concluída!</div>
+        </div>
+        <div class="notification-content">
+            <strong id="customerName">Maria S.</strong> - <span id="customerCity">São Paulo</span><br>
+            ✅ Descobriu <span id="conversationsFound">4</span> conversas suspeitas
+        </div>
+        <div class="notification-time" id="timeAgo">há 3 minutos</div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>🔓 Acesso Premium Liberado</h1>
+        <p>Complete seu pagamento e desbloqueie todo o conteúdo agora</p>
+        <div style="background: rgba(255,215,0,0.9); color: #000; padding: 8px 16px; font-weight: 600; font-size: 0.85rem; margin-top: 15px; border-radius: 15px; display: inline-block;">
+            ⏰ Oferta especial hoje
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Steps -->
+        <div class="steps">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span>Dados</span>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span>Pagamento</span>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span>Acesso</span>
+            </div>
+        </div>
+
+        <!-- Price Display -->
+        <div class="price-display">
+            <div class="price-label">🏆 Acesso Premium Completo</div>
+            <div style="font-size: 1.1rem; text-decoration: line-through; opacity: 0.7; margin-bottom: 5px;">De R$ 97,00</div>
+            <div class="price-value" id="mainPrice">R$ 27,90</div>
+            <div id="discountBadge" style="background: #FFD700; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; display: inline-block; margin-top: 10px;">
+                🔥 72% de desconto
+            </div>
+            <div class="price-description">Pagamento único • Acesso vitalício • Garantia de 7 dias</div>
+            
+            <div style="display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 15px; font-size: 0.8rem;">
+                    🔒 Seguro
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 15px; font-size: 0.8rem;">
+                    ⚡ Instantâneo
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 15px; font-size: 0.8rem;">
+                    ✅ Garantido
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Proof -->
+        <div style="background: rgba(52, 199, 89, 0.1); border-left: 4px solid #34c759; padding: 15px 20px; margin: 20px 0; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+            <div style="width: 35px; height: 35px; background: #34c759; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem;">
+                ✓
+            </div>
+            <div>
+                <div id="socialProofCount" style="font-weight: 600; color: #34c759;">1.847 pessoas</div>
+                <div style="font-size: 0.9rem;">já desbloquearam o conteúdo</div>
+            </div>
+        </div>
+
+        <!-- Simple Testimonial -->
+        <div style="background: rgba(255,255,255,0.8); padding: 18px; border-radius: 10px; margin: 20px 0; border-left: 3px solid var(--primary-green);">
+            <div style="font-style: italic; margin-bottom: 8px; color: var(--text-dark); font-size: 0.95rem;">
+                "Funcionou perfeitamente! Em poucos minutos já tinha acesso completo."
+            </div>
+            <div style="font-weight: 600; color: var(--primary-green); font-size: 0.85rem;">
+                - Cliente verificado
+            </div>
+        </div>
+
+        <!-- Subtle Timer -->
+        <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); color: #d63031; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+            ⏳ Desconto válido por mais <span id="timer" style="font-weight: 600;">14:59</span>
+        </div>
+
+        <!-- Form Section -->
+        <div class="card" id="formSection">
+            <h2 class="card-title">Seus Dados para Acesso</h2>
+            
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label class="form-label" for="name">Nome Completo *</label>
+                    <input type="text" id="name" class="form-input" placeholder="Digite seu nome completo" required>
+                    <div class="error-message" id="nameError">Por favor, digite seu nome completo</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">E-mail *</label>
+                    <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                    <div class="error-message" id="emailError">Por favor, digite um e-mail válido</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cpf">CPF *</label>
+                    <input type="text" id="cpf" class="form-input" placeholder="000.000.000-00" required maxlength="14">
+                    <div class="error-message" id="cpfError">Por favor, digite um CPF válido</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">WhatsApp (Opcional)</label>
+                    <input type="text" id="phone" class="form-input" placeholder="(11) 99999-9999" maxlength="15">
+                </div>
+
+                <!-- Order Bump Section -->
+                <div class="order-bump">
+                    <div class="order-bump-header">
+                        <div class="order-bump-icon">📱</div>
+                        <div class="order-bump-content">
+                            <h3>ADICIONE: Suporte VIP + Atualizações</h3>
+                            <p>Tenha suporte prioritário e acesso a todas as atualizações futuras</p>
+                        </div>
+                    </div>
+                    
+                    <div class="order-bump-offer">
+                        <h4 style="margin: 0 0 10px 0; color: #d35400;">🎆 O que você recebe:</h4>
+                        <ul class="order-bump-features">
+                            <li>Suporte VIP via WhatsApp (resposta em até 2h)</li>
+                            <li>Todas as atualizações futuras do sistema</li>
+                            <li>Novas funcionalidades assim que lançadas</li>
+                            <li>Suporte técnico especializado</li>
+                            <li>Acesso ao grupo VIP no Telegram</li>
+                        </ul>
+                        
+                        <div class="order-bump-price">
+                            <span class="order-bump-original" id="orderBumpOriginal">De R$ 47,00</span>
+                            <span class="order-bump-discount" id="orderBumpPrice">Por apenas + R$ 19,90</span>
+                            <span style="background: #e74c3c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">60% OFF</span>
+                        </div>
+                    </div>
+                    
+                    <label class="order-bump-checkbox" for="orderBumpCheckbox">
+                        <input type="checkbox" id="orderBumpCheckbox" name="orderBump" value="19.90">
+                        <span class="order-bump-checkbox-text">
+                            ✅ SIM! Eu quero adicionar o Suporte VIP por apenas +R$ 19,90
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z"/>
+                    </svg>
+                    GERAR QR CODE PIX - R$ 27,90
+                </button>
+                
+                <div style="text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-light);">
+                    🔒 Pagamento 100% seguro
+                </div>
+            </form>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="card qr-section" id="qrSection">
+            <h2 class="card-title">Pague com PIX</h2>
+            
+            <div class="status-message info">
+                <strong>⏰ Aguardando pagamento...</strong><br>
+                Escaneie o QR Code ou copie o código PIX para finalizar
+            </div>
+
+            <div class="qr-code-container">
+                <img id="qrCodeImage" class="qr-code-image" alt="QR Code PIX">
+            </div>
+
+            <div class="pix-instructions">
+                <h3>Como pagar:</h3>
+                <ol>
+                    <li>Abra o app do seu banco</li>
+                    <li>Escolha a opção PIX</li>
+                    <li>Escaneie o QR Code acima</li>
+                    <li>Confirme o pagamento de <strong>R$ 27,90</strong></li>
+                    <li>Pronto! Acesso será liberado automaticamente</li>
+                </ol>
+            </div>
+
+            <button class="copy-code-btn" id="copyCodeBtn" onclick="copyPixCode()">
+                📋 COPIAR CÓDIGO PIX
+            </button>
+
+            <div id="statusMessages"></div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Anti-debugging and script protection
+        (function() {
+            'use strict';
+            
+            // Disable right-click context menu
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Disable F12, Ctrl+Shift+I, Ctrl+U (relaxed for development)
+            /*
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                    (e.ctrlKey && e.key === 'u')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            */
+            
+            // Anti-debugging timer (disabled for development)
+            /*
+            setInterval(function() {
+                var start = new Date();
+                debugger;
+                var end = new Date();
+                if (end - start > 100) {
+                    // Developer tools detected
+                    window.location.reload();
+                }
+            }, 1000);
+            */
+            
+            // Clear console periodically (reduced frequency for development)
+            setInterval(function() {
+                if (Math.random() < 0.1) { // Only clear 10% of the time during development
+                    console.clear();
+                }
+            }, 10000); // Increased to 10 seconds
+            
+            // Obfuscated variable names
+            var _0x1a2b = {
+                'config': {
+                    'baseUrl': 'https://expfypay.com/api/v1',
+                    'publicKey': 'pk_b9a9b1f0117e98cd3a01b3bed32c42436fc69fbe1fd55992'
+                },
+                'demo': true,
+                'transaction': null,
+                'pixCode': '',
+                'basePrice': 27.90,
+                'orderBumpPrice': 19.90,
+                'totalPrice': 27.90,
+                'onlineUsers': 247,
+                'discoveries': 1847,
+                'isNotificationVisible': false
+            };
+            
+            // Protected functions with obfuscated names
+            window._0x3c4d = function(selector) {
+                return document.getElementById(selector);
+            };
+            
+            window._0x5e6f = function(selector) {
+                return document.querySelector(selector);
+            };
+            
+            window._0x7g8h = function(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            };
+            
+            // Store obfuscated data globally
+            window._protected = _0x1a2b;
+            
+            // Additional protection layer
+            Object.defineProperty(window, 'devtools', {
+                get: function() {
+                    throw new Error('DevTools access blocked');
+                },
+                set: function() {
+                    throw new Error('DevTools access blocked');
+                }
+            });
+            
+            // Encode sensitive strings
+            window._enc = {
+                'a': atob('cGl4Q29kZQ=='), // pixCode
+                'b': atob('dHJhbnNhY3Rpb24='), // transaction
+                'c': atob('cGF5bWVudA=='), // payment
+                'd': atob('Y2hlY2tvdXQ=') // checkout
+            };
+        })();
+        
+        // ExpfyPay API Configuration - Obfuscated
+        const EXPFY_CONFIG = window._protected.config;
+        const DEMO_MODE = window._protected.demo;
+        
+        let currentTransaction = window._protected.transaction;
+        let pixCode = window._protected.pixCode;
+        
+        // Check if user came from special offer
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSpecialOffer = urlParams.get('special_offer') === 'true';
+        
+        let basePrice = isSpecialOffer ? 14.90 : window._protected.basePrice;
+        let orderBumpPrice = isSpecialOffer ? 9.90 : window._protected.orderBumpPrice;
+        let totalPrice = basePrice;
+
+        // Enhanced Social Proof System with Credibility Boost - Obfuscated
+        onlineUsers = window._protected.onlineUsers;
+        discoveries = window._protected.discoveries;
+        isNotificationVisible = window._protected.isNotificationVisible;
+        // Order bump functionality - Obfuscated
+        function _0x9i0j() {
+            const orderBumpCheckbox = _0x3c4d('orderBumpCheckbox');
+            const submitBtn = _0x3c4d('submitBtn');
+            
+            if (orderBumpCheckbox.checked) {
+                totalPrice = basePrice + orderBumpPrice;
+            } else {
+                totalPrice = basePrice;
+            }
+            
+            // Update button text
+            submitBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z"/>
+                </svg>
+                GERAR QR CODE PIX - R$ ${totalPrice.toFixed(2).replace('.', ',')}
+            `;
+        }
+        
+        // Update pricing for special offer - Obfuscated
+        function _0xk1l2() {
+            const mainPrice = _0x3c4d('mainPrice');
+            const discountBadge = _0x3c4d('discountBadge');
+            const orderBumpOriginal = _0x3c4d('orderBumpOriginal');
+            const orderBumpPrice = _0x3c4d('orderBumpPrice');
+            
+            if (mainPrice) {
+                mainPrice.textContent = 'R$ 14,90';
+            }
+            
+            if (discountBadge) {
+                discountBadge.innerHTML = '🔥 OFERTA ESPECIAL - 85% OFF';
+                discountBadge.style.background = '#e74c3c';
+                discountBadge.style.color = 'white';
+            }
+            
+            if (orderBumpOriginal) {
+                orderBumpOriginal.textContent = 'De R$ 19,90';
+            }
+            
+            if (orderBumpPrice) {
+                orderBumpPrice.textContent = 'Por apenas + R$ 9,90';
+            }
+            
+            // Update submit button
+            _0x9i0j();
+        }
+
+        function _0xm3n4() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
+
+            let isValid = true;
+
+            // Reset errors
+            document.querySelectorAll('.form-input').forEach(input => input.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(msg => msg.style.display = 'none');
+
+            // Validate name
+            if (name.length < 3) {
+                showFieldError('name', 'Nome deve ter pelo menos 3 caracteres');
+                isValid = false;
+            }
+
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFieldError('email', 'Por favor, digite um e-mail válido');
+                isValid = false;
+            }
+
+            // Validate CPF
+            if (cpf.length !== 11 || !isValidCPF(cpf)) {
+                showFieldError('cpf', 'Por favor, digite um CPF válido');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + 'Error');
+            
+            field.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function isValidCPF(cpf) {
+            // Basic CPF validation
+            if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+            
+            let sum = 0;
+            for (let i = 0; i < 9; i++) {
+                sum += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let remainder = 11 - (sum % 11);
+            if (remainder === 10 || remainder === 11) remainder = 0;
+            if (remainder !== parseInt(cpf.charAt(9))) return false;
+
+            sum = 0;
+            for (let i = 0; i < 10; i++) {
+                sum += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            remainder = 11 - (sum % 11);
+            if (remainder === 10 || remainder === 11) remainder = 0;
+            
+            return remainder === parseInt(cpf.charAt(10));
+        }
+
+        async function createPayment() {
+            const submitBtn = document.getElementById('submitBtn');
+            const orderBumpCheckbox = document.getElementById('orderBumpCheckbox');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading"></div> GERANDO QR CODE...';
+
+            try {
+                const formData = {
+                    name: document.getElementById('name').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
+                    phone: document.getElementById('phone').value.trim()
+                };
+
+                // Get UTM parameters from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const utmData = {
+                    utm_source: urlParams.get('utm_source') || 'whatsapp_spy',
+                    utm_medium: urlParams.get('utm_medium') || 'funil',
+                    utm_campaign: urlParams.get('utm_campaign') || 'conversao_premium',
+                    utm_term: urlParams.get('utm_term') || 'monitoramento',
+                    utm_content: urlParams.get('utm_content') || 'checkout',
+                    src: urlParams.get('src') || '',
+                    sck: urlParams.get('sck') || ''
+                };
+
+                const paymentData = {
+                    amount: totalPrice,
+                    description: orderBumpCheckbox.checked ? 
+                        "Acesso Premium + Suporte VIP - Monitoramento WhatsApp Completo" : 
+                        "Acesso Premium - Monitoramento WhatsApp Completo",
+                    customer: {
+                        name: formData.name,
+                        document: formData.cpf,
+                        email: formData.email
+                    },
+                    external_id: `funil_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    callback_url: window.location.origin + "/webhook",
+                    utm: utmData,
+                    order_bump: orderBumpCheckbox.checked ? {
+                        name: "Suporte VIP + Atualizações",
+                        amount: orderBumpPrice
+                    } : null
+                };
+
+                console.log('Creating payment with data:', paymentData);
+
+                let result;
+                
+                if (DEMO_MODE) {
+                    // Demo mode - simulate API response
+                    console.log('DEMO MODE: Simulating ExpfyPay API response');
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+                    
+                    result = {
+                        success: true,
+                        data: {
+                            transaction_id: 'demo_' + Date.now(),
+                            external_id: paymentData.external_id,
+                            qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426655440000520400005303986540597.005802BR5913NOME COMPLETO6008SAOPAULO62070503***63041234',
+                            qr_code_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9ImJsYWNrIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UVIgQ09ERSBERUVNTXN0cmF0aXZvPC90ZXh0Pjwvc3ZnPg==',
+                            amount: totalPrice,
+                            status: 'pending'
+                        }
+                    };
+                } else {
+                    // Production mode requires secure backend integration
+                    throw new Error('Production mode requires secure backend integration. Secret keys cannot be exposed in client-side code.');
+                }
+                console.log('Payment response:', result);
+
+                if (result.success && result.data) {
+                    currentTransaction = result.data;
+                    pixCode = result.data.qr_code;
+                    
+                    // Store transaction data
+                    localStorage.setItem('currentTransaction', JSON.stringify(currentTransaction));
+                    localStorage.setItem('customerData', JSON.stringify(formData));
+                    
+                    // Show QR Code
+                    showQRCode(result.data);
+                    
+                    // Start checking payment status
+                    startPaymentStatusCheck();
+                } else {
+                    throw new Error(result.message || 'Erro ao gerar pagamento');
+                }
+
+            } catch (error) {
+                console.error('Payment creation error:', error);
+                showStatusMessage('Erro ao gerar QR Code: ' + error.message, 'error');
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        function showQRCode(paymentData) {
+            // Update steps
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+
+            // Hide form and show QR code
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('qrSection').classList.add('active');
+
+            // Set QR code image
+            document.getElementById('qrCodeImage').src = paymentData.qr_code_image;
+            
+            console.log('QR Code displayed for transaction:', paymentData.transaction_id);
+        }
+
+        function copyPixCode() {
+            if (pixCode) {
+                navigator.clipboard.writeText(pixCode).then(() => {
+                    const btn = document.getElementById('copyCodeBtn');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ CÓDIGO COPIADO!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                }).catch(() => {
+                    showStatusMessage('Erro ao copiar código. Tente selecionar manualmente.', 'error');
+                });
+            }
+        }
+
+        function startPaymentStatusCheck() {
+            // This would normally check payment status via webhook or polling
+            console.log('Starting payment status check for transaction:', currentTransaction.transaction_id);
+            
+            // Simulate payment confirmation (shorter time in demo mode)
+            const confirmationTime = DEMO_MODE ? 10000 : 30000; // 10s in demo, 30s in production
+            
+            setTimeout(() => {
+                // In a real implementation, this would come from webhook
+                simulatePaymentConfirmed();
+            }, confirmationTime);
+            
+            if (DEMO_MODE) {
+                showStatusMessage('🔧 MODO DEMONSTRAÇÃO: Pagamento será confirmado automaticamente em 10 segundos', 'info');
+            }
+        }
+
+        function simulatePaymentConfirmed() {
+            // Update steps
+            document.getElementById('step2').classList.add('completed');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.add('active');
+            
+            showStatusMessage('🎉 Pagamento confirmado! Redirecionando para o acesso premium...', 'success');
+            
+            setTimeout(() => {
+                // Redirect to premium content or back to report with unlocked content
+                window.location.href = '../relatorio/?premium=true';
+            }, 3000);
+        }
+
+        function showStatusMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `status-message ${type}`;
+            messageElement.innerHTML = message;
+            
+            statusDiv.innerHTML = '';
+            statusDiv.appendChild(messageElement);
+        }
+
+        // Enhanced Social Proof System with Credibility Boost
+        // Variables already declared above in obfuscated section
+        
+        // Mix of real customer data with enhanced credibility data
+        const enhancedCustomerData = [
+            { name: "Maria S.", city: "São Paulo", conversations: 4, real: true },
+            { name: "João P.", city: "Rio de Janeiro", conversations: 7, real: true },
+            { name: "Ana C.", city: "Belo Horizonte", conversations: 3, real: false },
+            { name: "Carlos R.", city: "Brasília", conversations: 6, real: false },
+            { name: "Fernanda L.", city: "Salvador", conversations: 5, real: true },
+            { name: "Ricardo M.", city: "Curitiba", conversations: 8, real: false },
+            { name: "Juliana F.", city: "Fortaleza", conversations: 4, real: true },
+            { name: "Eduardo S.", city: "Porto Alegre", conversations: 9, real: false },
+            { name: "Patrícia O.", city: "Recife", conversations: 3, real: true },
+            { name: "Roberto N.", city: "Goiânia", conversations: 6, real: false },
+            { name: "Camila T.", city: "Manaus", conversations: 5, real: false },
+            { name: "Diego A.", city: "Florianópolis", conversations: 7, real: true },
+            { name: "Larissa B.", city: "Natal", conversations: 4, real: false },
+            { name: "Marcos V.", city: "Campo Grande", conversations: 8, real: false },
+            { name: "Gabriela H.", city: "João Pessoa", conversations: 5, real: true },
+            { name: "André L.", city: "Vitória", conversations: 6, real: false },
+            { name: "Renata M.", city: "Maceió", conversations: 4, real: false },
+            { name: "Felipe S.", city: "Teresina", conversations: 7, real: false },
+            { name: "Isabela C.", city: "São Luís", conversations: 3, real: false },
+            { name: "Rafael D.", city: "Aracaju", conversations: 5, real: false }
+        ];
+        
+        function updateOnlineCounter() {
+            // Always keep above 200, with realistic fluctuation
+            const baseCount = 200;
+            const variation = Math.floor(Math.random() * 80) + 10; // 10-90 variation
+            onlineUsers = baseCount + variation;
+            
+            document.getElementById('onlineCount').textContent = onlineUsers;
+            console.log(`🟢 Online users updated: ${onlineUsers}`);
+        }
+        
+        function updateDiscoveriesCounter() {
+            // Gradually increase discoveries count (considerable values)
+            const increase = Math.floor(Math.random() * 3) + 1; // 1-3 increase
+            discoveries += increase;
+            
+            // Format with thousands separator
+            const formattedCount = discoveries.toLocaleString('pt-BR');
+            document.getElementById('discoveriesCount').textContent = formattedCount;
+            
+            // Update the social proof count to match discoveries
+            updateSocialProofCount();
+            
+            console.log(`🔍 Discoveries updated: ${discoveries}`);
+        }
+        
+        function updateSocialProofCount() {
+            // Update the "1.847 pessoas" text to match discoveries counter
+            const socialProofElement = document.getElementById('socialProofCount');
+            if (socialProofElement) {
+                const formattedCount = discoveries.toLocaleString('pt-BR');
+                socialProofElement.textContent = `${formattedCount} pessoas`;
+                console.log(`✅ Social proof count updated: ${formattedCount} pessoas`);
+            }
+        }
+        
+        function showEnhancedPurchaseNotification() {
+            // Prevent overlapping notifications
+            if (isNotificationVisible) {
+                return;
+            }
+            
+            const notification = document.getElementById('purchaseNotification');
+            if (!notification) {
+                console.error('Notification element not found!');
+                return;
+            }
+            
+            // Get elements for content update
+            const customerName = document.getElementById('customerName');
+            const customerCity = document.getElementById('customerCity');
+            const conversationsFound = document.getElementById('conversationsFound');
+            const timeAgo = document.getElementById('timeAgo');
+            
+            // Mix real and fake data (70% fake for credibility boost)
+            const useRealData = Math.random() < 0.3;
+            let selectedCustomer;
+            
+            if (useRealData) {
+                const realCustomers = enhancedCustomerData.filter(c => c.real);
+                selectedCustomer = realCustomers[Math.floor(Math.random() * realCustomers.length)];
+            } else {
+                const fakeCustomers = enhancedCustomerData.filter(c => !c.real);
+                selectedCustomer = fakeCustomers[Math.floor(Math.random() * fakeCustomers.length)];
+            }
+            
+            const minutesAgo = Math.floor(Math.random() * 8) + 1; // 1-8 minutes ago
+            
+            // Mark as visible to prevent conflicts
+            isNotificationVisible = true;
+            
+            // Update notification content
+            if (customerName) customerName.textContent = selectedCustomer.name;
+            if (customerCity) customerCity.textContent = selectedCustomer.city;
+            if (conversationsFound) conversationsFound.textContent = selectedCustomer.conversations;
+            if (timeAgo) timeAgo.textContent = `há ${minutesAgo} minuto${minutesAgo > 1 ? 's' : ''}`;
+            
+            // Show the notification
+            notification.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                // Allow next notification after animation completes
+                setTimeout(() => {
+                    isNotificationVisible = false;
+                }, 300);
+            }, 3000);
+            
+            console.log(`Purchase notification: ${selectedCustomer.name} (${useRealData ? 'REAL' : 'ENHANCED'})`);
+        }
+        
+        function updateActivityTicker() {
+            // Generate dynamic activity text with mix of real and enhanced data
+            const activities = [];
+            
+            // Get 4 random customers for the ticker
+            for (let i = 0; i < 4; i++) {
+                const customer = enhancedCustomerData[Math.floor(Math.random() * enhancedCustomerData.length)];
+                const actions = ['descobriu traição', 'confirmou suspeitas', 'encontrou evidências', 'verificou conversas'];
+                const action = actions[Math.floor(Math.random() * actions.length)];
+                
+                activities.push(`${customer.name.split(' ')[0]} ${action} em ${customer.city.split(',')[0] || customer.city}`);
+            }
+            
+            const activityText = '🔥 ATIVIDADE: ' + activities.join(' • ') + '...';
+            document.getElementById('activityText').textContent = activityText;
+        }
+        
+        function startCountdownTimer() {
+            let timeLeft = 15 * 60; // 15 minutes in seconds
+            const timerElement = document.getElementById('timer');
+            
+            if (!timerElement) return;
+            
+            function updateTimer() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
+                } else {
+                    timerElement.textContent = '0:00';
+                }
+            }
+            
+            updateTimer();
+        }
+
+        function startEnhancedSocialProof() {
+            console.log('🚀 Starting Enhanced Social Proof System (Mobile Optimized)');
+            
+            // Initial updates
+            updateOnlineCounter();
+            updateDiscoveriesCounter();
+            updateActivityTicker();
+            
+            // Update initial social proof count to match discoveries
+            updateSocialProofCount();
+            
+            // Show first purchase notification after 3 seconds
+            setTimeout(() => {
+                showEnhancedPurchaseNotification();
+                
+                // Continue showing notifications every 10-15 seconds (more frequent)
+                setInterval(() => {
+                    showEnhancedPurchaseNotification();
+                }, Math.random() * 5000 + 10000); // 10-15 seconds
+            }, 3000);
+            
+            // Update counters every 8-15 seconds
+            setInterval(() => {
+                updateOnlineCounter();
+            }, Math.random() * 7000 + 8000); // 8-15 seconds
+            
+            // Update discoveries every 10-18 seconds
+            setInterval(() => {
+                updateDiscoveriesCounter();
+            }, Math.random() * 8000 + 10000); // 10-18 seconds
+            
+            // Update activity ticker every 12-20 seconds
+            setInterval(() => {
+                updateActivityTicker();
+            }, Math.random() * 8000 + 12000); // 12-20 seconds
+        }
+        
+        function stopEnhancedSocialProof() {
+            if (socialProofInterval) {
+                clearInterval(socialProofInterval);
+            }
+            console.log('⏹️ Enhanced Social Proof stopped');
+        }
+
+        // Start timer when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startCountdownTimer();
+            
+            // Start enhanced social proof system
+            startEnhancedSocialProof();
+            
+            // Update pricing if special offer
+            if (isSpecialOffer) {
+                _0xk1l2();
+            }
+            
+            // Console warning to deter tampering
+            console.log('%cSTOP!', 'color: red; font-size: 50px; font-weight: bold;');
+            console.log('%cEste é um recurso do navegador destinado a desenvolvedores. Se alguém disse para você copiar e colar algo aqui para habilitar um recurso ou "hackear" a conta de alguém, é uma farsa e dará a essa pessoa acesso à sua conta.', 'color: red; font-size: 16px;');
+            
+            const form = _0x3c4d('checkoutForm');
+            const cpfInput = _0x3c4d('cpf');
+            const phoneInput = _0x3c4d('phone');
+            const orderBumpCheckbox = _0x3c4d('orderBumpCheckbox');
+
+            // Order bump checkbox event
+            orderBumpCheckbox.addEventListener('change', _0x9i0j);
+
+            // CPF Mask
+            cpfInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            });
+
+            // Phone Mask
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                    value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+                }
+                e.target.value = value;
+            });
+
+            // Form Submit
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (_0xm3n4()) {
+                    createPayment();
+                }
+            });
+        });
+
+        // Error handling for network issues
+        window.addEventListener('online', () => {
+            showStatusMessage('Conexão restabelecida', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            showStatusMessage('Conexão perdida. Verificando...', 'error');
+        });
+    </script>
+</body>
+</html>

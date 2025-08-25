@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funil Spy Analytics - Dashboard</title>
+    <!-- NO Chart.js - Using pure CSS charts to prevent infinite growth -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Simple CSS Chart - FIXED HEIGHT, NO GROWTH */
+        .simple-chart {
+            height: 300px !important;
+            max-height: 300px !important;
+            min-height: 300px !important;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        .chart-bar {
+            width: 60px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            margin: 0 5px;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .funnel-step {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .funnel-step:last-child {
+            border-bottom: none;
+        }
+
+        .funnel-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin: 0 15px;
+            flex: 1;
+            position: relative;
+        }
+
+        .funnel-label {
+            min-width: 120px;
+            font-weight: 500;
+        }
+
+        .funnel-value {
+            min-width: 80px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .real-time-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #d4edda;
+            color: #155724;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select, button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📊 Funil Spy Analytics</h1>
+        <p>Dashboard em tempo real - Dados REAIS do seu funil mobile</p>
+    </div>
+
+    <div class="container">
+        <!-- Controls -->
+        <div class="controls">
+            <div class="real-time-indicator">
+                <div class="pulse"></div>
+                Dashboard estático - Última atualização: <span id="lastUpdate">agora</span>
+            </div>
+            <div class="control-group">
+                <select id="periodFilter">
+                    <option value="1">🔥 Últimas 24h</option>
+                    <option value="7" selected>📅 Últimos 7 dias</option>
+                    <option value="30">📆 Últimos 30 dias</option>
+                </select>
+                <button onclick="loadRealData()" id="refreshBtn">🔄 Atualizar</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalSessions">-</div>
+                <div class="stat-label">Total de Sessões</div>
+                <div class="stat-change" id="sessionsChange">Carregando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalConversions">-</div>
+                <div class="stat-label">Conversões</div>
+                <div class="stat-change" id="conversionsChange">Carregando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="conversionRate">-%</div>
+                <div class="stat-label">Taxa de Conversão</div>
+                <div class="stat-change" id="rateChange">Carregando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRevenue">R$ -</div>
+                <div class="stat-label">Receita Total</div>
+                <div class="stat-change" id="revenueChange">Carregando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeUsers">-</div>
+                <div class="stat-label">Usuários Online</div>
+                <div class="stat-change" id="activeChange">Agora</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title">📈 Funil de Conversão (DADOS REAIS)</h3>
+                <div class="simple-chart" id="funnelChart">
+                    <div class="chart-bar" style="height: 100%;">
+                        <div class="chart-bar-value">100%</div>
+                        <div class="chart-bar-label">Relatório</div>
+                    </div>
+                    <div class="chart-bar" style="height: 45%;">
+                        <div class="chart-bar-value">45%</div>
+                        <div class="chart-bar-label">Checkout</div>
+                    </div>
+                    <div class="chart-bar" style="height: 30%;">
+                        <div class="chart-bar-value">30%</div>
+                        <div class="chart-bar-label">Formulário</div>
+                    </div>
+                    <div class="chart-bar" style="height: 25%;">
+                        <div class="chart-bar-value">25%</div>
+                        <div class="chart-bar-label">QR Code</div>
+                    </div>
+                    <div class="chart-bar" style="height: 12%;">
+                        <div class="chart-bar-value">12%</div>
+                        <div class="chart-bar-label">Conversão</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">🎯 Etapas do Funil</h3>
+                <div id="funnelSteps">
+                    <div class="funnel-step">
+                        <div class="funnel-label">Carregando...</div>
+                        <div class="funnel-bar" style="background: #e9ecef"></div>
+                        <div class="funnel-value">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaigns Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3 class="table-title">🎪 Performance por Campanha</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fonte</th>
+                        <th>Meio</th>
+                        <th>Campanha</th>
+                        <th>Sessões</th>
+                        <th>Conversões</th>
+                        <th>Taxa (%)</th>
+                        <th>Receita</th>
+                    </tr>
+                </thead>
+                <tbody id="campaignsTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            Carregando dados das campanhas...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        console.log('✨ Dashboard de Analytics - Dados Reais Ativado!');
+        
+        let isLoading = false;
+        
+        // Carregar dados na inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Carregando dashboard...');
+            loadRealData();
+            
+            // Auto-refresh a cada 60 segundos
+            setInterval(loadRealData, 60000);
+            
+            // Filtro de período
+            document.getElementById('periodFilter').addEventListener('change', loadRealData);
+        });
+        
+        async function loadRealData() {
+            if (isLoading) {
+                console.log('⏳ Já carregando dados...');
+                return;
+            }
+            
+            isLoading = true;
+            const period = document.getElementById('periodFilter').value;
+            
+            try {
+                console.log(`📊 Buscando dados reais para ${period} dias...`);
+                
+                // Mostrar estado de loading
+                document.getElementById('totalSessions').textContent = 'Carregando...';
+                
+                const response = await fetch(`/api/dashboard-data?days=${period}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Dados recebidos:', data);
+                
+                // Atualizar stats cards
+                updateStatsCards(data);
+                
+                // Atualizar funnel
+                updateFunnelVisualization(data.funnelData || []);
+                
+                // Atualizar tabela de campanhas
+                updateCampaignsTable(data.campaignData || []);
+                
+                // Atualizar timestamp
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                
+                console.log('✨ Dashboard atualizado com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                
+                // Mostrar erro nos cards
+                document.getElementById('totalSessions').textContent = 'Erro';
+                document.getElementById('totalConversions').textContent = 'Erro';
+                document.getElementById('conversionRate').textContent = 'Erro';
+                document.getElementById('totalRevenue').textContent = 'Erro';
+                
+                // Mostrar mensagem de erro
+                const campaignsTable = document.getElementById('campaignsTable');
+                campaignsTable.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #dc3545;">
+                            ❌ Erro ao carregar dados: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                isLoading = false;
+            }
+        }
+        
+        function updateStatsCards(data) {
+            // Formatar números
+            const formatNumber = (num) => {
+                return new Intl.NumberFormat('pt-BR').format(num || 0);
+            };
+            
+            const formatCurrency = (num) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(num || 0);
+            };
+            
+            // Atualizar valores
+            document.getElementById('totalSessions').textContent = formatNumber(data.totalSessions);
+            document.getElementById('totalConversions').textContent = formatNumber(data.totalConversions);
+            document.getElementById('conversionRate').textContent = `${data.conversionRate || 0}%`;
+            document.getElementById('totalRevenue').textContent = formatCurrency(data.totalRevenue);
+            document.getElementById('activeUsers').textContent = formatNumber(data.activeUsers);
+            
+            // Atualizar changes (simples indicação de dados reais)
+            document.getElementById('sessionsChange').textContent = data.isRealData ? '🟢 Real' : '🟡 Mock';
+            document.getElementById('conversionsChange').textContent = data.isRealData ? '🟢 Real' : '🟡 Mock';
+            document.getElementById('rateChange').textContent = data.isRealData ? '🟢 Real' : '🟡 Mock';
+            document.getElementById('revenueChange').textContent = data.isRealData ? '🟢 Real' : '🟡 Mock';
+            document.getElementById('activeChange').textContent = 'Agora';
+        }
+        
+        function updateFunnelVisualization(funnelData) {
+            console.log('📩 Atualizando funil:', funnelData);
+            
+            if (!funnelData || funnelData.length === 0) {
+                console.log('⚠️ Sem dados de funil, usando padrão');
+                funnelData = [
+                    { step: 'Relatório', count: 0, conversionRate: 0 },
+                    { step: 'Checkout', count: 0, conversionRate: 0 },
+                    { step: 'Formulário', count: 0, conversionRate: 0 },
+                    { step: 'QR Code', count: 0, conversionRate: 0 },
+                    { step: 'Conversão', count: 0, conversionRate: 0 }
+                ];
+            }
+            
+            // Atualizar gráfico de barras CSS
+            const chartContainer = document.getElementById('funnelChart');
+            chartContainer.innerHTML = '';
+            
+            funnelData.forEach((step, index) => {
+                const rate = Math.max(0, Math.min(100, step.conversionRate || 0));
+                const barDiv = document.createElement('div');
+                barDiv.className = 'chart-bar';
+                barDiv.style.height = `${rate}%`;
+                barDiv.innerHTML = `
+                    <div class="chart-bar-value">${rate.toFixed(1)}%</div>
+                    <div class="chart-bar-label">${step.step}</div>
+                `;
+                chartContainer.appendChild(barDiv);
+            });
+            
+            // Atualizar lista de etapas
+            const stepsContainer = document.getElementById('funnelSteps');
+            stepsContainer.innerHTML = '';
+            
+            funnelData.forEach(step => {
+                const rate = Math.max(0, step.conversionRate || 0);
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'funnel-step';
+                stepDiv.innerHTML = `
+                    <div class="funnel-label">${step.step}</div>
+                    <div class="funnel-bar" style="background: linear-gradient(90deg, #667eea ${rate}%, #e9ecef ${rate}%)"></div>
+                    <div class="funnel-value">${rate.toFixed(1)}% (${step.count || 0})</div>
+                `;
+                stepsContainer.appendChild(stepDiv);
+            });
+        }
+        
+        function updateCampaignsTable(campaignData) {
+            console.log('🎨 Atualizando campanhas:', campaignData);
+            
+            const tbody = document.getElementById('campaignsTable');
+            
+            if (!campaignData || campaignData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            📊 Nenhuma campanha encontrada no período selecionado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = campaignData.map(campaign => `
+                <tr>
+                    <td>${campaign.utm_source || 'Direct'}</td>
+                    <td>${campaign.utm_medium || 'organic'}</td>
+                    <td>${campaign.utm_campaign || 'unknown'}</td>
+                    <td>${campaign.sessions || 0}</td>
+                    <td>${campaign.conversions || 0}</td>
+                    <td>${campaign.conversionRate || 0}%</td>
+                    <td>R$ ${(campaign.revenue || 0).toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Função simples para refresh manual
+        function refreshData() {
+            console.log('🔄 Refresh manual solicitado');
+            loadRealData();
+        }
+        
+        // Timestamp inicial
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+    </script>
+</body>
+</html>

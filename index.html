@@ -1,0 +1,497 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+    <script src="js/latest.js" data-utmify-prevent-xcod-sck="" data-utmify-prevent-subids="" data-utmify-ignore-iframe="" async="" defer="">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/core.js"></script>
+    <title>Analise - Inicio</title>
+    <style>
+        :root {
+            --primary-green: #25D366;
+            --light-green: #dcf8c6;
+            --dark-green: #128C7E;
+            --background-color: #f5f5f1;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background-color: var(--background-color);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .menu-button svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-dark);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo svg {
+            height: 31px;
+        }
+
+        .download-button {
+            background-color: var(--primary-green);
+            border: 1px solid #000000;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .download-button:hover {
+            background-color: var(--dark-green);
+        }
+
+        .download-button svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--white);
+        }
+
+        /* Main Content */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 20px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #000000;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: var(--text-light);
+            max-width: 700px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .option-card {
+            background-color: var(--primary-green);
+            border: 1px solid #000000;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            color: var(--white);
+        }
+
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: var(--dark-green);
+        }
+
+        .icon-circle {
+            width: 56px;
+            height: 56px;
+            background-color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .icon-circle svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--primary-green);
+        }
+
+        .option-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--white);
+            padding: 30px 0;
+            margin-top: auto;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-green);
+        }
+
+        .copyright {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 10px;
+        }
+
+        /* Cookie Notice */
+        .cookie-notice {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--white);
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .cookie-notice p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .cookie-notice button {
+            background-color: var(--primary-green);
+            color: var(--white);
+            border: 1px solid #000000;
+            border-radius: 20px;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cookie-notice button:hover {
+            background-color: var(--dark-green);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 767px) {
+            .title {
+                font-size: 2rem;
+                margin-top: 20px;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+                margin-bottom: 30px;
+            }
+
+            .option-card {
+                padding: 14px;
+            }
+
+            .option-text {
+                font-size: 1rem;
+            }
+
+            .icon-circle {
+                width: 48px;
+                height: 48px;
+                margin-right: 12px;
+            }
+
+            .icon-circle svg {
+                width: 28px;
+                height: 28px;
+            }
+
+            .cookie-notice {
+                flex-direction: column;
+                padding: 12px;
+            }
+
+            .cookie-notice p {
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+
+            .main-content {
+                padding: 30px 15px;
+            }
+
+            .footer-links {
+                gap: 15px;
+            }
+
+            .footer-links a {
+                font-size: 13px;
+            }
+        }
+        
+        /* Cookie Notice */
+        .cookie-notice {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--text-dark);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .cookie-notice p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .cookie-notice button {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+    <!-- Remarketing Integration -->
+    <script src="/analytics/public/tracking.js"></script>
+    <script src="/analytics/public/pixel-tracking.js"></script>
+    <script>
+        // Initialize remarketing for this page
+        if (window.FunnelAnalytics) {
+            window.FunnelAnalytics.track('page_view_landing', {
+                source: 'main_page',
+                utm_source: new URLSearchParams(window.location.search).get('utm_source')
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <button class="menu-button">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+            </svg>
+        </button>
+
+        <button class="download-button">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <main class="main-content">
+            <h1 class="title">Proteja Seu Relacionamento</h1>
+            <p class="subtitle">Descubra como manter seu relacionamento seguro e saudável com nossa solução exclusiva.
+            </p>
+
+            <div class="options-container">
+                <div id="monitorarParceiro" class="option-card">
+                    <div class="icon-circle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMid meet">
+                            <g transform="translate(0.000000,1536.000000) scale(0.100000,-0.100000)">
+                                <path d="M4810 12999 c-221 -18 -522 -88 -706 -164 -239 -99 -387 -196 -549
+                                -360 -255 -257 -362 -525 -396 -996 -18 -241 13 -670 62 -865 13 -52 12 -54
+                                -53 -78 -68 -25 -123 -91 -150 -179 -19 -64 -20 -85 -15 -271 5 -172 10 -222
+                                36 -347 61 -295 170 -532 298 -650 l48 -44 32 -143 c38 -171 117 -414 184
+                                -567 51 -117 65 -145 164 -325 93 -169 100 -198 86 -389 -23 -312 -65 -436
+                                -180 -543 -116 -107 -259 -184 -818 -439 -708 -323 -853 -394 -1053 -516 -160
+                                -98 -254 -169 -364 -273 -195 -186 -315 -385 -426 -707 -127 -367 -212 -834
+                                -214 -1178 l-1 -180 34 -70 c44 -89 112 -157 199 -198 l67 -32 3935 -3 c3630
+                                -2 3940 -1 4003 14 127 31 230 122 283 252 20 48 24 75 24 172 0 370 -127
+                                1001 -274 1353 -150 362 -325 578 -646 799 -235 162 -398 243 -1105 546 -744
+                                319 -917 419 -995 573 -51 99 -82 289 -84 505 l-1 150 41 80 c22 43 75 145
+                                117 225 146 276 252 577 303 852 5 30 22 55 74 107 139 138 244 379 295 673
+                                25 147 38 314 33 436 -4 101 -8 124 -33 179 -33 74 -89 127 -155 146 -52 16
+                                -50 3 -22 171 34 194 45 346 45 590 0 554 -114 888 -399 1171 -254 253 -619
+                                421 -1074 494 -232 37 -436 46 -650 29z"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <span class="option-text">Quero Monitorar Meu Parceiro</span>
+                </div>
+
+                <div id="monitorarParceira" class="option-card">
+                    <div class="icon-circle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMid meet">
+                            <g transform="translate(0.000000,1536.000000) scale(0.100000,-0.100000)">
+                                <path d="M4705 12580 c-455 -50 -820 -173 -1108 -374 -114 -79 -312 -267 -407
+                                -386 -336 -421 -521 -920 -590 -1585 -21 -202 -30 -390 -40 -830 -18 -798 -31
+                                -1034 -71 -1305 -50 -334 -126 -546 -289 -800 -86 -134 -95 -153 -109 -222
+                                -24 -117 31 -209 169 -278 308 -156 1167 -190 1671 -66 l89 22 -6 -20 c-52
+                                -165 -160 -282 -354 -380 -58 -29 -220 -97 -360 -151 -140 -53 -293 -112 -340
+                                -130 -47 -18 -193 -74 -325 -125 -645 -249 -850 -354 -1092 -562 -223 -192
+                                -406 -456 -514 -744 -106 -283 -201 -802 -203 -1114 -1 -140 0 -147 27 -203
+                                140 -284 661 -423 1901 -507 1263 -85 3836 -74 4986 21 201 16 483 48 655 74
+                                596 90 889 212 987 413 33 66 33 68 32 207 -2 283 -91 793 -184 1060 -70 200
+                                -207 449 -329 598 -78 96 -225 234 -326 307 -256 184 -546 310 -1665 720 -348
+                                128 -455 184 -557 293 -69 75 -177 269 -134 242 15 -9 238 -53 362 -72 168
+                                -25 738 -25 937 0 338 42 565 136 629 261 11 22 14 49 11 105 -5 86 -18 117
+                                -125 288 -187 303 -276 613 -313 1088 -11 149 -26 584 -35 1020 -20 1019 -95
+                                1469 -320 1930 -227 463 -519 736 -950 885 -104 36 -344 86 -460 96 -71 6 -88
+                                11 -152 51 -121 75 -275 126 -478 158 -117 19 -500 28 -620 15z"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <span class="option-text">Quero Monitorar Minha Parceira</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="index.html#">Política de Privacidade</a>
+                    <a href="index.html#">Termos de Uso</a>
+                    <a href="index.html#">Suporte por Email</a>
+                </div>
+                <p class="copyright">© 2024 Proteja Seu Relacionamento. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cookie Notice -->
+    <div id="cookieNotice" class="cookie-notice">
+        <p>Este site utiliza cookies para melhorar sua experiência. Ao continuar, você concorda com nossa política.</p>
+        <button id="acceptCookies">Aceitar</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Cookie Notice
+            const cookieNotice = document.getElementById('cookieNotice');
+            const acceptCookiesBtn = document.getElementById('acceptCookies');
+
+            // Check if user already accepted cookies
+            if (localStorage.getItem('cookiesAccepted') === 'true') {
+                cookieNotice.style.display = 'none';
+            }
+
+            // Handle cookie acceptance
+            acceptCookiesBtn.addEventListener('click', function () {
+                localStorage.setItem('cookiesAccepted', 'true');
+                cookieNotice.style.display = 'none';
+            });
+
+            // Handle option clicks
+            const monitorarParceiroCard = document.getElementById('monitorarParceiro');
+            const monitorarParceiraCard = document.getElementById('monitorarParceira');
+
+            monitorarParceiroCard.addEventListener('click', function () {
+                console.log('Clicou em monitorar parceiro');
+                handleSelection('parceiro');
+            });
+
+            monitorarParceiraCard.addEventListener('click', function () {
+                console.log('Clicou em monitorar parceira');
+                handleSelection('parceira');
+            });
+
+            // Function to handle selection and redirect
+            function handleSelection(tipo) {
+                console.log('handleSelection called with:', tipo);
+                
+                // Store selection in localStorage
+                localStorage.setItem('alvoMonitoramento', tipo);
+                console.log('Stored in localStorage:', tipo);
+
+                // Capturar todos os parâmetros da URL atual
+                const urlParams = new URLSearchParams(window.location.search);
+                console.log('URL params:', urlParams.toString());
+
+                // Construir a URL final
+                const finalUrl = urlParams.toString() ? `./numero/?${urlParams.toString()}` : './numero/';
+                console.log('Final URL:', finalUrl);
+
+                // Redirecionar
+                console.log('Redirecting...');
+                window.location.href = finalUrl;
+            }
+        });
+    </script>
+
+
+
+</body></html>
