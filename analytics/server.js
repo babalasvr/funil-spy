@@ -33,7 +33,7 @@ wss.on('connection', (ws) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Database setup
 const db = new sqlite3.Database('./analytics.db');
