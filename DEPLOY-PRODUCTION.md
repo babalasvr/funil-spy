@@ -28,8 +28,8 @@ nano .env
 ```env
 # Payment API Configuration
 PAYMENT_API_PORT=3002
-EXPFY_PUBLIC_KEY=sua_chave_publica_real_expfypay
-EXPFY_SECRET_KEY=sua_chave_secreta_real_expfypay
+EXPFY_PUBLIC_KEY=pk_b9a9b1f0117e98cd3a01b3bed32c42436fc69fbe1fd55992
+EXPFY_SECRET_KEY=sk_b5cd83402109c8f2f449544aee17d00376298fefe2adfc54dfeb27d150cea5c0
 EXPFY_API_URL=https://api.expfypay.com/v1
 
 # Pixel Tracking

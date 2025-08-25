@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-require('dotenv').config();
+require('dotenv').config({ path: '../analytics/.env' });
 
 const app = express();
 const PORT = process.env.PAYMENT_API_PORT || 3002;
@@ -14,13 +14,26 @@ app.use(express.json());
 const EXPFY_CONFIG = {
     publicKey: process.env.EXPFY_PUBLIC_KEY,
     secretKey: process.env.EXPFY_SECRET_KEY,
-    apiUrl: process.env.EXPFY_API_URL || 'https://api.expfypay.com/v1'
+    apiUrl: process.env.EXPFY_API_URL || 'https://pro.expfypay.com/api/v1'
 };
+
+// Debug configuration loading
+console.log('🔧 Loading ExpfyPay configuration...');
+console.log('📁 Current working directory:', process.cwd());
+console.log('🔑 Public key loaded:', EXPFY_CONFIG.publicKey ? '✅ Yes' : '❌ No');
+console.log('🔐 Secret key loaded:', EXPFY_CONFIG.secretKey ? '✅ Yes' : '❌ No');
+console.log('🌐 API URL:', EXPFY_CONFIG.apiUrl);
 
 // Validate configuration
 if (!EXPFY_CONFIG.publicKey || !EXPFY_CONFIG.secretKey) {
     console.error('❌ ExpfyPay credentials not configured. Check .env file.');
+    console.log('💡 Expected environment variables:');
+    console.log('   - EXPFY_PUBLIC_KEY');
+    console.log('   - EXPFY_SECRET_KEY');
+    console.log('   - EXPFY_API_URL (optional)');
     process.exit(1);
+} else {
+    console.log('✅ ExpfyPay credentials configured successfully');
 }
 
 // Health check endpoint
@@ -50,10 +63,21 @@ app.post('/create-payment', async (req, res) => {
                 email: req.body.customer.email
             },
             external_id: req.body.external_id,
-            callback_url: req.body.callback_url,
-            utm: req.body.utm || {},
-            order_bump: req.body.order_bump || null
+            callback_url: req.body.callback_url
         };
+        
+        // Add UTM parameters if provided
+        if (req.body.utm && Object.keys(req.body.utm).length > 0) {
+            paymentData.utm = {
+                utm_source: req.body.utm.utm_source || '',
+                utm_medium: req.body.utm.utm_medium || '',
+                utm_campaign: req.body.utm.utm_campaign || '',
+                utm_term: req.body.utm.utm_term || '',
+                utm_content: req.body.utm.utm_content || '',
+                src: req.body.utm.src || '',
+                sck: req.body.utm.sck || ''
+            };
+        }
 
         // Make request to ExpfyPay API
         const response = await axios.post(
