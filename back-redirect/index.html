@@ -1,10 +1,17 @@
 <!DOCTYPE html><html lang="pt-BR"><head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
     <title>Análise Pausada</title>
     <script src="../analytics/public/tracking.js"></script>
     <meta name="robots" content="noindex">
-    <script disable-devtool-auto="" src="https://cdn.jsdelivr.net/npm/disable-devtool" url="https://youtu.be/3W4aWnPoRy8?si=jUzCI55TpmEXM3Yw"></script>  
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -125,45 +132,88 @@
     	}
 
 
-        /* Responsividade */
-        @media (max-width: 600px) {
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
             h2 {
-                font-size: 1.2em;
-                margin: 10px 0;
+                font-size: 1.3em;
+                margin: 15px 0;
+                line-height: 1.4;
             }
             .progress-container {
-                width: 100px;
-                height: 100px;
-                margin: 20px auto;
+                width: 120px;
+                height: 120px;
+                margin: 30px auto;
             }
             .progress-inner-circle {
-                width: 75px;
-                height: 75px;
+                width: 95px;
+                height: 95px;
             }
             .progress-text {
-                font-size: 1.5em;
+                font-size: 1.6em;
             }
             .button-link {
-                padding: 25px 30px;
-                font-size: 1em;
+                padding: 20px 15px;
+                font-size: 1.1em;
+                margin: 20px auto;
+                border-radius: 10px;
+                max-width: 95%;
+                min-height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
             }
             .headline {
-                font-size: 1.6em;
-                padding: 10px;
+                font-size: 1.8em;
+                padding: 15px 10px;
+                line-height: 1.2;
             }
             .icone {
-                font-size: 30px;
+                font-size: 32px;
+                margin: 0 8px;
             }
             .continue {
-            	  font-size: 0.9em;
+                font-size: 1em;
+                padding: 0 15px;
             }
-		        .progresso {
-		        		margin: 30px auto;
-		            font-size: 16px;
-		        }            
+            .progresso {
+                margin: 20px 10px;
+                font-size: 16px;
+                padding: 15px 20px;
+            }
+            .corpo {
+                padding: 0 15px;
+            }
+            .corpo img {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .headline {
+                font-size: 1.5em;
+                padding: 12px 8px;
+            }
+            .button-link {
+                font-size: 1em;
+                padding: 18px 12px;
+            }
+            .progresso {
+                margin: 15px 5px;
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
         }
     </style>
-<script async="" defer="" src="js/pixel.js"></script><script async="" defer="" src="js/pixel.js"></script></head>
+<script async="" defer="" src="js/pixel.js" onload="console.log('pixel.js loaded successfully')" onerror="console.error('Failed to load pixel.js')"></script><script async="" defer="" src="js/pixel.js" onload="console.log('pixel.js loaded successfully (duplicate)')" onerror="console.error('Failed to load pixel.js (duplicate)')"></script></head>
 <body>
     <div class="headline"><span class="icone">⚠️</span>ANÁLISE PAUSADA<span class="icone">⚠️</span></div>
     <div class="corpo">
@@ -193,19 +243,37 @@
             const progressText = document.getElementById('progress-text');
             let progress = 0;
             const duration = 300000; // 5 minutos em milissegundos
+            let animationInterval;
 
             function updateProgress() {
                 progress += 1;
                 const percentage = Math.min(100, (progress / (duration / 1000)) * 100).toFixed(0);
-                progressCircle.style.setProperty('--progress', percentage);
-                progressText.textContent = `${percentage}%`;
+                
+                if (progressCircle && progressText) {
+                    progressCircle.style.setProperty('--progress', percentage);
+                    progressText.textContent = `${percentage}%`;
+                }
 
                 if (progress < duration / 1000) {
-                    setTimeout(updateProgress, 1000);
+                    animationInterval = setTimeout(updateProgress, 1000);
+                } else {
+                    clearTimeout(animationInterval);
                 }
             }
 
-            updateProgress();
+            // Ensure elements exist before starting animation
+            if (progressCircle && progressText) {
+                updateProgress();
+            }
+            
+            // Handle page visibility changes (mobile optimization)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    clearTimeout(animationInterval);
+                } else if (progress < duration / 1000) {
+                    updateProgress();
+                }
+            });
         });
     </script>
     
@@ -219,31 +287,101 @@
     if (paramsString) {
       document.querySelectorAll('a').forEach(link => {
         const href = link.getAttribute('href');
-        if (href && !href.startsWith('#') && !href.startsWith('mailto:')) {
+        if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
           const separator = href.includes('?') ? '&' : '?';
           link.setAttribute('href', href + separator + paramsString);
         }
       });
     }
+    
+    // Mobile-specific optimizations
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // Prevent zoom on input focus
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+      
+      // Add mobile-specific classes
+      document.body.classList.add('mobile-device');
+      
+      // Optimize touch interactions
+      document.querySelectorAll('.button-link').forEach(button => {
+        button.style.touchAction = 'manipulation';
+        button.style.webkitTapHighlightColor = 'transparent';
+        
+        // Add touch feedback
+        button.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.98)';
+        });
+        
+        button.addEventListener('touchend', function() {
+          setTimeout(() => {
+            this.style.transform = 'scale(1)';
+          }, 100);
+        });
+      });
+    }
   });
 </script> 
 
-<script src="js/latest.js" data-utmify-prevent-xcod-sck="" data-utmify-prevent-subids="" async="" defer=""></script>
+<script src="js/latest.js" data-utmify-prevent-xcod-sck="" data-utmify-prevent-subids="" async="" defer="" onload="console.log('latest.js loaded successfully')" onerror="console.error('Failed to load latest.js')"></script>
 <script>
-  window.pixelId = "66f46e9a69e84de401f8772f";
+  window.pixelId = "66ac66dd43136b1d66bddb65";
   var a = document.createElement("script");
   a.setAttribute("async", "");
   a.setAttribute("defer", "");
   a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
   document.head.appendChild(a);
 </script>
+
 <script>
-  window.pixelId = "66f46e9a69e84de401f8772f";
-  var a = document.createElement("script");
-  a.setAttribute("async", "");
-  a.setAttribute("defer", "");
-  a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-  document.head.appendChild(a);
+  // Mobile-specific error handling and optimizations
+  (function() {
+    'use strict';
+    
+    // Log para debug
+    console.log('Back-redirect page loaded on:', navigator.userAgent);
+    
+    // Detectar se é mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isMobile) {
+      console.log('Mobile device detected');
+      
+      // Prevenir zoom no foco de inputs
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+      
+      // Fix para iOS Safari
+      if (isIOS) {
+        // Corrigir height em dispositivos iOS
+        const setIOSHeight = () => {
+          document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        };
+        
+        setIOSHeight();
+        window.addEventListener('resize', setIOSHeight);
+        window.addEventListener('orientationchange', () => {
+          setTimeout(setIOSHeight, 100);
+        });
+      }
+    }
+    
+    // Error handler global
+    window.addEventListener('error', function(e) {
+      console.error('JavaScript error:', e.error);
+    });
+    
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled promise rejection:', e.reason);
+    });
+    
+  })();
 </script>
 
 </body></html>

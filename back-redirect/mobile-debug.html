@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
+    <title>Mobile Debug - Back Redirect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .debug-info {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #02b400;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .warning {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        pre {
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <h2>🔍 Mobile Debug Test</h2>
+        <p>Esta página ajuda a identificar problemas específicos do mobile.</p>
+    </div>
+
+    <div class="debug-info" id="user-agent">
+        <h3>📱 User Agent</h3>
+        <pre id="ua-info"></pre>
+    </div>
+
+    <div class="debug-info" id="viewport-info">
+        <h3>📏 Viewport Info</h3>
+        <pre id="viewport-data"></pre>
+    </div>
+
+    <div class="debug-info" id="scripts-status">
+        <h3>📜 Scripts Status</h3>
+        <div id="script-status"></div>
+    </div>
+
+    <div class="debug-info" id="url-params">
+        <h3>🔗 URL Parameters</h3>
+        <pre id="params-info"></pre>
+    </div>
+
+    <div class="debug-info">
+        <h3>🧪 Testes</h3>
+        <button class="test-button" onclick="testLocalStorage()">Testar LocalStorage</button>
+        <button class="test-button" onclick="testSessionStorage()">Testar SessionStorage</button>
+        <button class="test-button" onclick="testCookies()">Testar Cookies</button>
+        <button class="test-button" onclick="testRedirect()">Testar Redirecionamento</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="debug-info">
+        <h3>🎯 Navegação</h3>
+        <a href="index.html" class="test-button">Voltar para Back-Redirect Original</a>
+        <a href="../relatorio/index.html" class="test-button">Ir para Relatório</a>
+    </div>
+
+    <script>
+        // Detectar informações do dispositivo
+        function updateDeviceInfo() {
+            const ua = navigator.userAgent;
+            document.getElementById('ua-info').textContent = ua;
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            
+            document.getElementById('viewport-data').innerHTML = `
+Screen: ${screen.width}x${screen.height}
+Window: ${window.innerWidth}x${window.innerHeight}
+Device Pixel Ratio: ${window.devicePixelRatio}
+Is Mobile: ${isMobile}
+Is iOS: ${isIOS}
+Is Android: ${isAndroid}
+Touch Support: ${('ontouchstart' in window)}
+            `;
+        }
+
+        // Verificar status dos scripts
+        function checkScripts() {
+            const statusDiv = document.getElementById('script-status');
+            let html = '';
+            
+            // Verificar se jQuery existe (comum em muitos sites)
+            html += `<div class="${typeof $ !== 'undefined' ? 'success' : 'warning'}">
+                jQuery: ${typeof $ !== 'undefined' ? 'Disponível' : 'Não encontrado'}
+            </div>`;
+            
+            // Verificar se fetch está disponível
+            html += `<div class="${typeof fetch !== 'undefined' ? 'success' : 'error'}">
+                Fetch API: ${typeof fetch !== 'undefined' ? 'Disponível' : 'Não disponível'}
+            </div>`;
+            
+            // Verificar localStorage
+            html += `<div class="${typeof localStorage !== 'undefined' ? 'success' : 'error'}">
+                LocalStorage: ${typeof localStorage !== 'undefined' ? 'Disponível' : 'Não disponível'}
+            </div>`;
+            
+            statusDiv.innerHTML = html;
+        }
+
+        // Mostrar parâmetros da URL
+        function showUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const params = {};
+            urlParams.forEach((value, key) => {
+                params[key] = value;
+            });
+            document.getElementById('params-info').textContent = JSON.stringify(params, null, 2);
+        }
+
+        // Função de teste para LocalStorage
+        function testLocalStorage() {
+            const results = document.getElementById('test-results');
+            try {
+                localStorage.setItem('test', 'mobile-debug');
+                const value = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                
+                results.innerHTML += `<div class="debug-info success">
+                    ✅ LocalStorage funcionando: ${value}
+                </div>`;
+            } catch (e) {
+                results.innerHTML += `<div class="debug-info error">
+                    ❌ Erro no LocalStorage: ${e.message}
+                </div>`;
+            }
+        }
+
+        // Função de teste para SessionStorage
+        function testSessionStorage() {
+            const results = document.getElementById('test-results');
+            try {
+                sessionStorage.setItem('test', 'mobile-debug');
+                const value = sessionStorage.getItem('test');
+                sessionStorage.removeItem('test');
+                
+                results.innerHTML += `<div class="debug-info success">
+                    ✅ SessionStorage funcionando: ${value}
+                </div>`;
+            } catch (e) {
+                results.innerHTML += `<div class="debug-info error">
+                    ❌ Erro no SessionStorage: ${e.message}
+                </div>`;
+            }
+        }
+
+        // Função de teste para Cookies
+        function testCookies() {
+            const results = document.getElementById('test-results');
+            try {
+                document.cookie = "test=mobile-debug; path=/";
+                const cookies = document.cookie;
+                
+                results.innerHTML += `<div class="debug-info ${cookies.includes('test=mobile-debug') ? 'success' : 'warning'}">
+                    ${cookies.includes('test=mobile-debug') ? '✅' : '⚠️'} Cookies: ${cookies || 'Nenhum cookie encontrado'}
+                </div>`;
+            } catch (e) {
+                results.innerHTML += `<div class="debug-info error">
+                    ❌ Erro nos Cookies: ${e.message}
+                </div>`;
+            }
+        }
+
+        // Função de teste para redirecionamento
+        function testRedirect() {
+            const results = document.getElementById('test-results');
+            results.innerHTML += `<div class="debug-info warning">
+                ⏳ Testando redirecionamento em 3 segundos...
+            </div>`;
+            
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const paramsString = urlParams.toString();
+                let targetUrl = '../relatorio/index.html';
+                
+                if (paramsString) {
+                    targetUrl += '?' + paramsString;
+                }
+                
+                results.innerHTML += `<div class="debug-info success">
+                    🎯 Redirecionando para: ${targetUrl}
+                </div>`;
+                
+                // Simular redirect sem realmente redirecionar
+                // window.location.href = targetUrl;
+                console.log('Redirecionamento seria para:', targetUrl);
+            }, 3000);
+        }
+
+        // Preservar parâmetros UTM nos links
+        function preserveUTMParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramsString = urlParams.toString();
+
+            if (paramsString) {
+                document.querySelectorAll('a').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+                        const separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + paramsString);
+                    }
+                });
+            }
+        }
+
+        // Executar no carregamento da página
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDeviceInfo();
+            checkScripts();
+            showUrlParams();
+            preserveUTMParams();
+            
+            // Log importante para debug
+            console.log('Mobile Debug loaded successfully');
+            console.log('User Agent:', navigator.userAgent);
+            console.log('Screen size:', screen.width + 'x' + screen.height);
+            console.log('Window size:', window.innerWidth + 'x' + window.innerHeight);
+        });
+    </script>
+
+    <script>
+      window.pixelId = "66ac66dd43136b1d66bddb65";
+      var a = document.createElement("script");
+      a.setAttribute("async", "");
+      a.setAttribute("defer", "");
+      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+      document.head.appendChild(a);
+    </script>
+
+</body>
+</html>

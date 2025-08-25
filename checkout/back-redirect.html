@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
     <title>ESPERE! Oferta Especial</title>
     <script src="../analytics/public/tracking.js"></script>
     <meta name="robots" content="noindex">
-    <script disable-devtool-auto="" src="https://cdn.jsdelivr.net/npm/disable-devtool" url="https://youtu.be/3W4aWnPoRy8?si=jUzCI55TpmEXM3Yw"></script>
+
     <style>
         :root {
             --primary-green: #25D366;
@@ -433,13 +440,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             startTimer();
             
+            console.log('🔍 Back-redirect loaded with URL:', window.location.href);
+            
             // Order bump checkbox handling
             const orderBumpCheck = document.getElementById('orderBumpCheck');
             const totalOld = document.querySelector('.total-old');
             const totalNew = document.querySelector('.total-new');
             const checkoutBtn = document.getElementById('checkoutBtn');
             
+            console.log('📝 Found elements:', {
+                orderBumpCheck: !!orderBumpCheck,
+                totalOld: !!totalOld,
+                totalNew: !!totalNew,
+                checkoutBtn: !!checkoutBtn
+            });
+            
             function updateTotal() {
+                console.log('💰 Updating totals. Order bump checked:', orderBumpCheck.checked);
+                
                 if (orderBumpCheck.checked) {
                     totalOld.textContent = 'De R$ 47,80';
                     totalNew.textContent = 'R$ 24,80';
@@ -449,6 +467,8 @@
                     totalNew.textContent = 'R$ 14,90';
                     checkoutBtn.innerHTML = '🔥 QUERO APROVEITAR ESTA OFERTA POR R$ 14,90';
                 }
+                
+                console.log('✅ Total updated. New price:', totalNew.textContent);
             }
             
             orderBumpCheck.addEventListener('change', updateTotal);
@@ -457,20 +477,41 @@
             // Preserve UTM parameters
             const urlParams = new URLSearchParams(window.location.search);
             
-            if (urlParams.toString() && checkoutBtn) {
-                const href = checkoutBtn.getAttribute('href');
-                const separator = href.includes('?') ? '&' : '?';
-                let newHref = href + separator + urlParams.toString() + '&special_offer=true';
+            if (checkoutBtn) {
+                // Always add special offer parameter
+                let newHref = 'index.html?special_offer=true';
                 
-                // Add order bump parameter when checked
-                checkoutBtn.addEventListener('click', function() {
-                    if (orderBumpCheck.checked) {
-                        newHref += '&order_bump=true';
-                    }
-                    checkoutBtn.setAttribute('href', newHref);
-                });
+                // Add existing UTM parameters
+                if (urlParams.toString()) {
+                    newHref += '&' + urlParams.toString();
+                }
                 
+                // Set the initial href
                 checkoutBtn.setAttribute('href', newHref);
+                
+                // Update href when clicking based on order bump status
+                checkoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    let finalHref = 'index.html?special_offer=true';
+                    
+                    // Add order bump parameter if checked
+                    if (orderBumpCheck && orderBumpCheck.checked) {
+                        finalHref += '&order_bump=true';
+                    }
+                    
+                    // Add existing UTM parameters
+                    if (urlParams.toString()) {
+                        finalHref += '&' + urlParams.toString();
+                    }
+                    
+                    console.log('Redirecting to checkout with URL:', finalHref);
+                    
+                    // Use window.location.replace for better mobile compatibility
+                    setTimeout(() => {
+                        window.location.replace(finalHref);
+                    }, 100);
+                });
             }
         });
 
@@ -486,7 +527,7 @@
     <!-- UTM and Pixel Scripts -->
     <script src="../relatorio/js/latest.js" data-utmify-prevent-xcod-sck="" data-utmify-prevent-subids="" async="" defer=""></script>
     <script>
-        window.pixelId = "66f46e9a69e84de401f8772f";
+        window.pixelId = "66ac66dd43136b1d66bddb65";
         var a = document.createElement("script");
         a.setAttribute("async", "");
         a.setAttribute("defer", "");

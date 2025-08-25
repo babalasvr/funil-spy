@@ -4,6 +4,13 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
     <script src="js/core.js"></script>
     
     <!-- Checkout Back Button Redirect Script -->
@@ -1032,6 +1039,13 @@
         // Check if user came from special offer
         const urlParams = new URLSearchParams(window.location.search);
         const isSpecialOffer = urlParams.get('special_offer') === 'true';
+        const hasOrderBumpFromRedirect = urlParams.get('order_bump') === 'true';
+        
+        console.log('🔍 URL Parameters:', {
+            special_offer: isSpecialOffer,
+            order_bump: hasOrderBumpFromRedirect,
+            all_params: Object.fromEntries(urlParams.entries())
+        });
         
         let basePrice = isSpecialOffer ? 14.90 : window._protected.basePrice;
         let orderBumpPrice = isSpecialOffer ? 9.90 : window._protected.orderBumpPrice;
@@ -1537,20 +1551,33 @@
             
             // Update pricing if special offer
             if (isSpecialOffer) {
+                console.log('🎉 Applying special offer pricing...');
                 _0xk1l2();
+                
+                // If order bump was selected in back-redirect, check the checkbox
+                if (hasOrderBumpFromRedirect) {
+                    const orderBumpCheckbox = document.getElementById('orderBumpCheckbox');
+                    if (orderBumpCheckbox) {
+                        orderBumpCheckbox.checked = true;
+                        _0x9i0j(); // Update pricing
+                        console.log('✅ Order bump pre-selected from back-redirect');
+                    }
+                }
             }
             
             // Console warning to deter tampering
             console.log('%cSTOP!', 'color: red; font-size: 50px; font-weight: bold;');
             console.log('%cEste é um recurso do navegador destinado a desenvolvedores. Se alguém disse para você copiar e colar algo aqui para habilitar um recurso ou "hackear" a conta de alguém, é uma farsa e dará a essa pessoa acesso à sua conta.', 'color: red; font-size: 16px;');
             
-            const form = _0x3c4d('checkoutForm');
-            const cpfInput = _0x3c4d('cpf');
-            const phoneInput = _0x3c4d('phone');
-            const orderBumpCheckbox = _0x3c4d('orderBumpCheckbox');
+            const form = document.getElementById('checkoutForm');
+            const cpfInput = document.getElementById('cpf');
+            const phoneInput = document.getElementById('phone');
+            const orderBumpCheckbox = document.getElementById('orderBumpCheckbox');
 
             // Order bump checkbox event
-            orderBumpCheckbox.addEventListener('change', _0x9i0j);
+            if (orderBumpCheckbox) {
+                orderBumpCheckbox.addEventListener('change', _0x9i0j);
+            }
 
             // CPF Mask
             cpfInput.addEventListener('input', function(e) {
@@ -1572,13 +1599,16 @@
             });
 
             // Form Submit
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (_0xm3n4()) {
-                    createPayment();
-                }
-            });
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (_0xm3n4()) {
+                        createPayment();
+                    }
+                });
+            }
         });
+
 
         // Error handling for network issues
         window.addEventListener('online', () => {
@@ -1589,5 +1619,15 @@
             showStatusMessage('Conexão perdida. Verificando...', 'error');
         });
     </script>
+
+    <script>
+      window.pixelId = "66ac66dd43136b1d66bddb65";
+      var a = document.createElement("script");
+      a.setAttribute("async", "");
+      a.setAttribute("defer", "");
+      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+      document.head.appendChild(a);
+    </script>
+
 </body>
 </html>
