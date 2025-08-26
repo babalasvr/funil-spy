@@ -7,7 +7,12 @@ let dashboardData = {
 };
 
 let autoRefreshInterval;
+
+// Use a API base correta para conexão com o backend
 const API_BASE = '/api';
+
+// Log da inicialização para debugging
+console.log('Dashboard inicializado. API_BASE:', API_BASE);
 
 // Set timezone to São Paulo/Brazil
 const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
@@ -47,12 +52,16 @@ async function loadDashboardData(showLoading = true) {
     try {
         const period = document.getElementById('periodFilter').value;
         
+        // Debug API endpoints
+        console.log(`Loading data from API: ${API_BASE}/stats and ${API_BASE}/leads`);
+        
         // Fetch stats
         const statsResponse = await fetch(`${API_BASE}/stats?period=${period}`);
         if (!statsResponse.ok) {
             throw new Error(`Stats API error: ${statsResponse.status} ${statsResponse.statusText}`);
         }
         const stats = await statsResponse.json();
+        console.log('Stats loaded successfully:', stats);
         
         // Fetch leads data
         const leadsResponse = await fetch(`${API_BASE}/leads?period=${period}`);
@@ -60,6 +69,7 @@ async function loadDashboardData(showLoading = true) {
             throw new Error(`Leads API error: ${leadsResponse.status} ${leadsResponse.statusText}`);
         }
         const leads = await leadsResponse.json();
+        console.log('Leads loaded successfully:', leads);
 
         dashboardData.stats = stats;
         dashboardData.leads = leads;
@@ -69,9 +79,20 @@ async function loadDashboardData(showLoading = true) {
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        showError('Erro ao carregar dados do dashboard: ' + error.message);
+        document.getElementById('leadsTableBody').innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <strong>❌ Erro ao carregar dados reais:</strong><br>
+                    ${error.message}<br><br>
+                    <small>Verifique se o serviço de analytics está rodando e acessível.</small>
+                </td>
+            </tr>
+        `;
         
-        // Only load mock data if explicitly requested for development
+        // Atualizar contador de resultados
+        document.getElementById('tableCount').textContent = '0';
+        
+        // NÃO carregue dados mockados em produção
         // loadMockData();
     } finally {
         dashboardData.isLoading = false;
@@ -404,6 +425,24 @@ function formatCurrency(value) {
 // Show error message
 function showError(message) {
     console.error(message);
+    
+    // Adiciona um alerta visual para erros na interface
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center;';
+    errorDiv.innerHTML = `<strong>Erro:</strong> ${message}`;
+    
+    // Insere no topo da tabela
+    const tableContainer = document.querySelector('.data-table-container');
+    if (tableContainer) {
+        tableContainer.insertBefore(errorDiv, tableContainer.firstChild);
+        
+        // Remove o alerta após 10 segundos
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 10000);
+    }
 }
 
 // Export data to CSV
