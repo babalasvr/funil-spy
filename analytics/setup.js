@@ -45,7 +45,7 @@ db.serialize(() => {
         session_id TEXT UNIQUE NOT NULL,
         first_page TEXT,
         last_page TEXT,
-        page_views INTEGER DEFAULT 0,
+        total_events INTEGER DEFAULT 0,
         duration INTEGER DEFAULT 0,
         converted BOOLEAN DEFAULT FALSE,
         revenue DECIMAL(10,2) DEFAULT 0,
@@ -105,7 +105,7 @@ db.serialize(() => {
     
     db.run(`INSERT OR IGNORE INTO sessions (
         session_id, utm_source, utm_medium, utm_campaign, 
-        first_page, device_type, page_views
+        first_page, device_type, total_events
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
     [sampleSessionId, 'facebook', 'cpc', 'whatsapp-spy', '/relatorio/', 'mobile', 5]);
     

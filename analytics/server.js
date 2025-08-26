@@ -203,14 +203,14 @@ function updateSession(sessionId, pageUrl, pageTitle, utmParams, deviceType) {
             // Update existing session
             db.run(`UPDATE sessions SET 
                 last_page = ?, 
-                page_views = page_views + 1,
+                total_events = total_events + 1,
                 updated_at = ?
                 WHERE session_id = ?`, 
                 [pageUrl, formatSaoPauloDate(), sessionId]);
         } else {
             // Create new session
             db.run(`INSERT INTO sessions (
-                session_id, first_page, last_page, page_views,
+                session_id, first_page, last_page, total_events,
                 utm_source, utm_medium, utm_campaign, device_type, created_at, updated_at
             ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`, [
                 sessionId, pageUrl, pageUrl,
