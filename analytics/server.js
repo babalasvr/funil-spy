@@ -436,14 +436,10 @@ app.get('/api/leads', (req, res) => {
             GROUP_CONCAT(e.event_name) as events_list,
             e.browser,
             e.os,
-            e.properties,
-            e.page_title as current_page_title,
-            e.page_url as current_page_url
+            e.properties
         FROM sessions s
         LEFT JOIN conversions c ON s.session_id = c.session_id
-        LEFT JOIN events e ON s.session_id = e.session_id AND e.timestamp = (
-            SELECT MAX(timestamp) FROM events e2 WHERE e2.session_id = s.session_id
-        )
+        LEFT JOIN events e ON s.session_id = e.session_id
         WHERE s.created_at >= ?
         GROUP BY s.session_id
         ORDER BY s.created_at DESC
@@ -472,9 +468,6 @@ app.get('/api/leads', (req, res) => {
                 console.warn('Failed to parse properties:', e);
             }
             
-            // Determine current page
-            let currentPage = row.current_page_url || row.last_page || '';
-            
             return {
                 session_id: row.session_id,
                 created_at: row.created_at,
@@ -499,8 +492,7 @@ app.get('/api/leads', (req, res) => {
                 conversion_date: row.conversion_date,
                 revenue: row.revenue || 0,
                 order_bump: Boolean(row.order_bump),
-                current_page: currentPage,
-                current_page_title: row.current_page_title || ''
+                current_page: row.last_page || ''
             };
         });
         
