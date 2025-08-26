@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obrigado pelo seu pagamento!</title>
+    <style>
+        :root {
+            --primary-green: #25D366;
+            --dark-green: #128C7E;
+            --background-color: #f5f5f5;
+            --text-dark: #2c3e50;
+            --white: #ffffff;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 40px 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--dark-green);
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .info {
+            background-color: #e8f4f8;
+            border-left: 4px solid var(--primary-green);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .info h3 {
+            color: var(--dark-green);
+            margin-bottom: 10px;
+        }
+
+        .timer {
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="icon">✓</div>
+            <h1>Pagamento Confirmado!</h1>
+            <p>Obrigado pela sua compra. Seu acesso ao conteúdo premium foi liberado com sucesso.</p>
+            
+            <a href="https://drive.google.com/seu-drive-link-aqui" class="btn" id="accessButton">
+                Acessar Conteúdo
+            </a>
+            
+            <div class="info">
+                <h3>Instruções de Acesso</h3>
+                <p>Clique no botão acima para acessar o conteúdo premium no Google Drive.</p>
+                <p>Se você não for redirecionado automaticamente em <span class="timer" id="timer">10</span> segundos, clique no botão manualmente.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contador regressivo para redirecionamento automático
+        let seconds = 10;
+        const timerElement = document.getElementById('timer');
+        const accessButton = document.getElementById('accessButton');
+        
+        // Substitua esta URL pelo link real do seu Google Drive
+        const driveLink = "https://drive.google.com/seu-drive-link-aqui";
+        accessButton.href = driveLink;
+        
+        const countdown = setInterval(() => {
+            seconds--;
+            timerElement.textContent = seconds;
+            
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                // Redireciona automaticamente para o Google Drive
+                window.location.href = driveLink;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

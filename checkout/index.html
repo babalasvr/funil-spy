@@ -1387,11 +1387,11 @@
             document.getElementById('step2').classList.remove('active');
             document.getElementById('step3').classList.add('active');
             
-            showStatusMessage('🎉 Pagamento confirmado! Redirecionando para o acesso premium...', 'success');
+            showStatusMessage('🎉 Pagamento confirmado! Redirecionando para a página de agradecimento...', 'success');
             
             setTimeout(() => {
-                // Redirect to premium content or back to report with unlocked content
-                window.location.href = '../relatorio/?premium=true';
+                // Redirect to thank you page
+                window.location.href = 'obrigado.html';
             }, 3000);
         }
 
