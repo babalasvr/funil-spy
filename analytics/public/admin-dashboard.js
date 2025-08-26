@@ -49,10 +49,16 @@ async function loadDashboardData(showLoading = true) {
         
         // Fetch stats
         const statsResponse = await fetch(`${API_BASE}/stats?period=${period}`);
+        if (!statsResponse.ok) {
+            throw new Error(`Stats API error: ${statsResponse.status} ${statsResponse.statusText}`);
+        }
         const stats = await statsResponse.json();
         
         // Fetch leads data
         const leadsResponse = await fetch(`${API_BASE}/leads?period=${period}`);
+        if (!leadsResponse.ok) {
+            throw new Error(`Leads API error: ${leadsResponse.status} ${leadsResponse.statusText}`);
+        }
         const leads = await leadsResponse.json();
 
         dashboardData.stats = stats;
@@ -63,10 +69,10 @@ async function loadDashboardData(showLoading = true) {
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        showError('Erro ao carregar dados do dashboard');
+        showError('Erro ao carregar dados do dashboard: ' + error.message);
         
-        // Load mock data for demonstration
-        loadMockData();
+        // Only load mock data if explicitly requested for development
+        // loadMockData();
     } finally {
         dashboardData.isLoading = false;
         document.getElementById('loadingState').style.display = 'none';
