@@ -417,13 +417,14 @@ app.get('/api/leads', (req, res) => {
     // Convert to São Paulo timezone for query
     const cutoffDateString = formatSaoPauloDate(cutoffDate);
     
+    // Modified query to fix GROUP_CONCAT issue
     const query = `
         SELECT 
             s.session_id,
             s.created_at,
             s.first_page,
             s.last_page,
-            s.page_views,
+            s.total_events as page_views,
             s.converted,
             s.utm_source,
             s.utm_medium,
@@ -433,7 +434,6 @@ app.get('/api/leads', (req, res) => {
             c.customer_data,
             c.order_bump,
             c.timestamp as conversion_date,
-            GROUP_CONCAT(e.event_name) as events_list,
             e.browser,
             e.os,
             e.properties
@@ -478,7 +478,7 @@ app.get('/api/leads', (req, res) => {
                 investigated_number: properties.investigated_number || properties.numeroClonado || null,
                 target_type: properties.alvoMonitoramento || null,
                 whatsapp_photo: properties.fotoperfil ? true : false,
-                funnel_steps: row.events_list ? row.events_list.split(',') : [],
+                funnel_steps: [], // Events list removed from query to fix SQLite error
                 pages_visited: row.page_views || 0,
                 utm_source: row.utm_source,
                 utm_medium: row.utm_medium,
