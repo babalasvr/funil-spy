@@ -109,7 +109,8 @@ function loadMockData() {
             converted: true,
             conversion_date: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
             revenue: 27.90,
-            order_bump: false
+            order_bump: false,
+            current_page: '/checkout/'
         },
         {
             session_id: 'session_002',
@@ -130,7 +131,8 @@ function loadMockData() {
             os: 'iOS',
             converted: false,
             abandoned: true,
-            revenue: 0
+            revenue: 0,
+            current_page: '/relatorio/'
         },
         {
             session_id: 'session_003',
@@ -151,7 +153,8 @@ function loadMockData() {
             os: 'Windows',
             converted: false,
             active: true,
-            revenue: 0
+            revenue: 0,
+            current_page: '/checkout/'
         }
     ];
 
@@ -244,7 +247,8 @@ function createLeadRow(lead) {
     const deviceIcon = lead.device_type === 'mobile' ? '📱' : '💻';
     const deviceClass = lead.device_type === 'mobile' ? 'device-mobile' : 'device-desktop';
     
-    // Funnel progress
+    // Funnel progress - show current page instead of number of pages
+    const currentPage = lead.current_page || (lead.last_page ? getFriendlyPageName(lead.last_page) : 'Página desconhecida');
     const funnelSteps = lead.funnel_steps ? lead.funnel_steps.length : 0;
     
     row.innerHTML = `
@@ -261,8 +265,8 @@ function createLeadRow(lead) {
             <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.target_type || '-'}</div>
         </td>
         <td>
-            <div style="font-weight: 500;">${funnelSteps} etapas</div>
-            <div style="font-size: 0.75rem; color: var(--gray-500);">visitou ${lead.pages_visited || 0} páginas</div>
+            <div style="font-weight: 500;">${currentPage}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${funnelSteps} etapas</div>
         </td>
         <td>
             <div style="font-weight: 500;">${lead.utm_source || '-'}</div>
@@ -287,12 +291,80 @@ function createLeadRow(lead) {
     return row;
 }
 
+// Get friendly page name from URL
+function getFriendlyPageName(url) {
+    if (!url) return 'Página desconhecida';
+    
+    if (url.includes('/relatorio/')) return 'Relatório';
+    if (url.includes('/checkout/')) return 'Checkout';
+    if (url.includes('/carregando/')) return 'Carregando';
+    if (url.includes('/numero/')) return 'Número';
+    if (url.includes('/obrigado/')) return 'Obrigado';
+    if (url.includes('/back-redirect/')) return 'Back Redirect';
+    
+    // Extract filename if possible
+    const urlObj = new URL(url, 'http://example.com');
+    const path = urlObj.pathname;
+    const parts = path.split('/').filter(part => part.length > 0);
+    
+    if (parts.length > 0) {
+        return parts[parts.length - 1].replace('.html', '').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
+    return 'Página desconhecida';
+}
+
 // View lead details
 function viewLeadDetails(sessionId) {
     const lead = dashboardData.leads.find(l => l.session_id === sessionId);
     if (!lead) return;
     
-    alert(`Detalhes do Lead:\n\nSession ID: ${lead.session_id}\nNome: ${lead.name || '-'}\nEmail: ${lead.email || '-'}\nTelefone: ${lead.phone || '-'}\nCPF: ${lead.cpf || '-'}`);
+    // Create a detailed view of the lead
+    let details = `Detalhes do Lead:\n\n`;
+    details += `Session ID: ${lead.session_id}\n`;
+    details += `Nome: ${lead.name || '-'}\n`;
+    details += `Email: ${lead.email || '-'}\n`;
+    details += `Telefone: ${lead.phone || '-'}\n`;
+    details += `CPF: ${lead.cpf || '-'}\n`;
+    details += `Número Investigado: ${lead.investigated_number || '-'}\n`;
+    details += `Tipo de Alvo: ${lead.target_type || '-'}\n`;
+    details += `Data de Criação: ${formatDateInSaoPaulo(lead.created_at)}\n`;
+    details += `Página Atual: ${getFriendlyPageName(lead.current_page || lead.last_page)}\n`;
+    details += `Etapas no Funil: ${lead.funnel_steps ? lead.funnel_steps.length : 0}\n`;
+    details += `Páginas Visitadas: ${lead.pages_visited || 0}\n`;
+    details += `Dispositivo: ${lead.device_type || '-'}\n`;
+    details += `Navegador: ${lead.browser || '-'}\n`;
+    details += `Status: ${getStatusText(lead)}\n`;
+    details += `Receita: ${lead.revenue ? formatCurrency(lead.revenue) : '-'}`;
+    
+    if (lead.converted && lead.conversion_date) {
+        details += `\nData de Conversão: ${formatDateInSaoPaulo(lead.conversion_date)}`;
+    }
+    
+    alert(details);
+}
+
+// Format date in São Paulo timezone
+function formatDateInSaoPaulo(dateString) {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-BR', {
+        timeZone: SAO_PAULO_TIMEZONE,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Get status text
+function getStatusText(lead) {
+    if (lead.converted) return 'Convertido';
+    if (lead.abandoned) return 'Abandonado';
+    if (lead.active) return 'Ativo';
+    return 'Pendente';
 }
 
 // Filter data based on status and search input

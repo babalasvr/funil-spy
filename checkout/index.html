@@ -1078,6 +1078,62 @@
             `;
         }
         
+        // Capture lead data when user starts filling the form
+        function captureLeadData() {
+            // Only capture once
+            if (window.leadDataCaptured) return;
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
+                phone: document.getElementById('phone').value.trim()
+            };
+            
+            // Only capture if at least one field is filled
+            if (formData.name || formData.email || formData.cpf || formData.phone) {
+                // Generate session ID if not exists
+                let sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) {
+                    sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('sessionId', sessionId);
+                }
+                
+                // Send lead data to analytics
+                fetch('http://localhost:3001/api/capture-lead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        customer_data: formData,
+                        current_page: window.location.pathname
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('✅ Lead data captured');
+                        window.leadDataCaptured = true;
+                    }
+                }).catch(error => {
+                    console.error('Error capturing lead data:', error);
+                });
+            }
+        }
+        
+        // Add event listeners to capture lead data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add input listeners to form fields
+            const formFields = ['name', 'email', 'cpf', 'phone'];
+            formFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', captureLeadData);
+                }
+            });
+        });
+
         // Update pricing for special offer - Obfuscated
         function _0xk1l2() {
             const mainPrice = _0x3c4d('mainPrice');
@@ -1187,6 +1243,13 @@
                     cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
                     phone: document.getElementById('phone').value.trim()
                 };
+
+                // Get session ID
+                let sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) {
+                    sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('sessionId', sessionId);
+                }
 
                 // Get UTM parameters from URL
                 const urlParams = new URLSearchParams(window.location.search);

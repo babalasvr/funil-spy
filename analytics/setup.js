@@ -19,31 +19,39 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT NOT NULL,
+        user_id TEXT,
         event_name TEXT NOT NULL,
-        properties TEXT,
         page_url TEXT,
         page_title TEXT,
-        user_agent TEXT,
+        properties TEXT,
+        utm_source TEXT,
+        utm_medium TEXT,
+        utm_campaign TEXT,
+        utm_term TEXT,
+        utm_content TEXT,
+        device_type TEXT,
+        browser TEXT,
+        os TEXT,
         screen_width INTEGER,
         screen_height INTEGER,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ip_address TEXT,
+        user_agent TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
     // Sessions table
     db.run(`CREATE TABLE IF NOT EXISTS sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT UNIQUE NOT NULL,
-        utm_source TEXT,
-        utm_medium TEXT,
-        utm_campaign TEXT,
-        utm_term TEXT,
-        utm_content TEXT,
-        src TEXT,
-        sck TEXT,
         first_page TEXT,
         last_page TEXT,
         page_views INTEGER DEFAULT 0,
-        session_duration INTEGER DEFAULT 0,
+        duration INTEGER DEFAULT 0,
+        converted BOOLEAN DEFAULT FALSE,
+        revenue DECIMAL(10,2) DEFAULT 0,
+        utm_source TEXT,
+        utm_medium TEXT,
+        utm_campaign TEXT,
         device_type TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -54,12 +62,11 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT NOT NULL,
         conversion_type TEXT NOT NULL,
-        value REAL,
-        order_bump BOOLEAN DEFAULT 0,
-        special_offer BOOLEAN DEFAULT 0,
+        value DECIMAL(10,2),
+        order_bump BOOLEAN DEFAULT FALSE,
+        special_offer BOOLEAN DEFAULT FALSE,
         customer_data TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
     
     // Sales table for detailed sales tracking
@@ -82,7 +89,9 @@ db.serialize(() => {
     // Create indexes for better performance
     db.run(`CREATE INDEX IF NOT EXISTS idx_events_session_id ON events(session_id)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_conversions_session_id ON conversions(session_id)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_sales_transaction_id ON sales(transaction_id)`);

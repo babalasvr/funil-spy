@@ -18,6 +18,18 @@ const PORT = 3001;
 // Set timezone to São Paulo/Brazil
 process.env.TZ = 'America/Sao_Paulo';
 
+// Utility function to get São Paulo time
+function getSaoPauloTime() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+}
+
+// Utility function to format date for database with São Paulo timezone
+function formatSaoPauloDate(date = new Date()) {
+    // Create a new Date object in São Paulo timezone
+    const saoPauloDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    return saoPauloDate.toISOString().replace('T', ' ').substring(0, 19);
+}
+
 // Initialize services
 const remarketing = new RemarketingService('./analytics.db');
 const whatsapp = new WhatsAppService({ debug: true });
@@ -115,17 +127,6 @@ db.serialize(() => {
     )`);
 });
 
-// Utility function to get São Paulo time
-function getSaoPauloTime() {
-    return new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-}
-
-// Utility function to format date for database with São Paulo timezone
-function formatSaoPauloDate(date = new Date()) {
-    const saoPauloDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-    return saoPauloDate.toISOString().replace('T', ' ').substring(0, 19);
-}
-
 // Generate session ID
 function generateSessionId() {
     return crypto.randomBytes(16).toString('hex');
@@ -168,15 +169,15 @@ app.post('/api/track', (req, res) => {
         session_id, event_name, page_url, page_title, properties,
         utm_source, utm_medium, utm_campaign, utm_term, utm_content,
         device_type, browser, os, screen_width, screen_height,
-        ip_address, user_agent
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        ip_address, user_agent, timestamp
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
     stmt.run([
         sessionId, eventName, pageUrl, pageTitle, JSON.stringify(properties),
         utmParams.utm_source, utmParams.utm_medium, utmParams.utm_campaign,
         utmParams.utm_term, utmParams.utm_content,
         deviceType, browser, os, screenWidth, screenHeight,
-        req.ip, userAgent
+        req.ip, userAgent, formatSaoPauloDate()
     ], function(err) {
         if (err) {
             console.error('Error inserting event:', err);
@@ -184,14 +185,14 @@ app.post('/api/track', (req, res) => {
         }
 
         // Update or create session
-        updateSession(sessionId, pageUrl, utmParams, deviceType);
+        updateSession(sessionId, pageUrl, pageTitle, utmParams, deviceType);
         
         res.json({ success: true, eventId: this.lastID });
     });
 });
 
 // Update session data
-function updateSession(sessionId, pageUrl, utmParams, deviceType) {
+function updateSession(sessionId, pageUrl, pageTitle, utmParams, deviceType) {
     db.get('SELECT * FROM sessions WHERE session_id = ?', [sessionId], (err, row) => {
         if (err) {
             console.error('Error checking session:', err);
@@ -202,14 +203,14 @@ function updateSession(sessionId, pageUrl, utmParams, deviceType) {
             // Update existing session
             db.run(`UPDATE sessions SET 
                 last_page = ?, 
-                total_events = total_events + 1,
+                page_views = page_views + 1,
                 updated_at = ?
                 WHERE session_id = ?`, 
                 [pageUrl, formatSaoPauloDate(), sessionId]);
         } else {
             // Create new session
             db.run(`INSERT INTO sessions (
-                session_id, first_page, last_page, total_events,
+                session_id, first_page, last_page, page_views,
                 utm_source, utm_medium, utm_campaign, device_type, created_at, updated_at
             ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`, [
                 sessionId, pageUrl, pageUrl,
@@ -220,6 +221,49 @@ function updateSession(sessionId, pageUrl, utmParams, deviceType) {
         }
     });
 }
+
+// Endpoint to capture lead data even when payment is not completed
+app.post('/api/capture-lead', (req, res) => {
+    const {
+        session_id,
+        customer_data,
+        current_page
+    } = req.body;
+
+    // Update session with customer data
+    db.run(`UPDATE sessions SET 
+        converted = 0,
+        updated_at = ?
+        WHERE session_id = ?`, 
+        [formatSaoPauloDate(), session_id], function(err) {
+        if (err) {
+            console.error('Error updating session:', err);
+            return res.status(500).json({ error: 'Failed to capture lead' });
+        }
+
+        // Insert partial conversion record
+        const stmt = db.prepare(`INSERT INTO conversions (
+            session_id, conversion_type, value, order_bump, special_offer, customer_data, timestamp
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+
+        stmt.run([
+            session_id,
+            'partial_lead',
+            0,
+            false,
+            false,
+            JSON.stringify(customer_data),
+            formatSaoPauloDate()
+        ], function(convErr) {
+            if (convErr) {
+                console.error('Error inserting partial conversion:', convErr);
+                return res.status(500).json({ error: 'Failed to capture lead' });
+            }
+
+            res.json({ success: true, message: 'Lead data captured successfully' });
+        });
+    });
+});
 
 // Endpoint to register sales data
 app.post('/api/register-sale', (req, res) => {
@@ -379,7 +423,7 @@ app.get('/api/leads', (req, res) => {
             s.created_at,
             s.first_page,
             s.last_page,
-            s.total_events,
+            s.page_views,
             s.converted,
             s.utm_source,
             s.utm_medium,
@@ -392,10 +436,14 @@ app.get('/api/leads', (req, res) => {
             GROUP_CONCAT(e.event_name) as events_list,
             e.browser,
             e.os,
-            e.properties
+            e.properties,
+            e.page_title as current_page_title,
+            e.page_url as current_page_url
         FROM sessions s
         LEFT JOIN conversions c ON s.session_id = c.session_id
-        LEFT JOIN events e ON s.session_id = e.session_id
+        LEFT JOIN events e ON s.session_id = e.session_id AND e.timestamp = (
+            SELECT MAX(timestamp) FROM events e2 WHERE e2.session_id = s.session_id
+        )
         WHERE s.created_at >= ?
         GROUP BY s.session_id
         ORDER BY s.created_at DESC
@@ -424,6 +472,9 @@ app.get('/api/leads', (req, res) => {
                 console.warn('Failed to parse properties:', e);
             }
             
+            // Determine current page
+            let currentPage = row.current_page_url || row.last_page || '';
+            
             return {
                 session_id: row.session_id,
                 created_at: row.created_at,
@@ -435,7 +486,7 @@ app.get('/api/leads', (req, res) => {
                 target_type: properties.alvoMonitoramento || null,
                 whatsapp_photo: properties.fotoperfil ? true : false,
                 funnel_steps: row.events_list ? row.events_list.split(',') : [],
-                pages_visited: row.total_events || 0,
+                pages_visited: row.page_views || 0,
                 utm_source: row.utm_source,
                 utm_medium: row.utm_medium,
                 utm_campaign: row.utm_campaign,
@@ -443,11 +494,13 @@ app.get('/api/leads', (req, res) => {
                 browser: row.browser,
                 os: row.os,
                 converted: Boolean(row.converted),
-                abandoned: !row.converted && row.total_events > 3,
-                active: !row.converted && row.total_events > 0 && (new Date() - new Date(row.created_at)) < 24 * 60 * 60 * 1000,
+                abandoned: !row.converted && row.page_views > 3,
+                active: !row.converted && row.page_views > 0 && (new Date() - new Date(row.created_at)) < 24 * 60 * 60 * 1000,
                 conversion_date: row.conversion_date,
                 revenue: row.revenue || 0,
-                order_bump: Boolean(row.order_bump)
+                order_bump: Boolean(row.order_bump),
+                current_page: currentPage,
+                current_page_title: row.current_page_title || ''
             };
         });
         
