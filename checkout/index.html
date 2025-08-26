@@ -782,7 +782,7 @@
         <div class="price-display">
             <div class="price-label">🏆 Acesso Premium Completo</div>
             <div style="font-size: 1.1rem; text-decoration: line-through; opacity: 0.7; margin-bottom: 5px;">De R$ 97,00</div>
-            <div class="price-value" id="mainPrice">R$ 27,90</div>
+            <div class="price-value" id="mainPrice">R$ 2,00</div>
             <div id="discountBadge" style="background: #FFD700; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; display: inline-block; margin-top: 10px;">
                 🔥 72% de desconto
             </div>
@@ -866,7 +866,7 @@
                     </div>
                     
                     <div class="order-bump-offer">
-                        <h4 style="margin: 0 0 10px 0; color: #d35400;">🎆 O que você recebe:</h4>
+                        <h4 style="margin: 0 0 10px 0; color: #d35400;">邙 O que você recebe:</h4>
                         <ul class="order-bump-features">
                             <li>Suporte VIP via WhatsApp (resposta em até 2h)</li>
                             <li>Todas as atualizações futuras do sistema</li>
@@ -894,7 +894,7 @@
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z"/>
                     </svg>
-                    GERAR QR CODE PIX - R$ 27,90
+                    GERAR QR CODE PIX - R$ 2,00
                 </button>
                 
                 <div style="text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-light);">
@@ -922,7 +922,7 @@
                     <li>Abra o app do seu banco</li>
                     <li>Escolha a opção PIX</li>
                     <li>Escaneie o QR Code acima</li>
-                    <li>Confirme o pagamento de <strong>R$ 27,90</strong></li>
+                    <li>Confirme o pagamento de <strong>R$ 2,00</strong></li>
                     <li>Pronto! Acesso será liberado automaticamente</li>
                 </ol>
             </div>
@@ -989,9 +989,9 @@
                 'demo': true,
                 'transaction': null,
                 'pixCode': '',
-                'basePrice': 27.90,
+                'basePrice': 2.00,
                 'orderBumpPrice': 19.90,
-                'totalPrice': 27.90,
+                'totalPrice': 2.00,
                 'onlineUsers': 247,
                 'discoveries': 1847,
                 'isNotificationVisible': false
@@ -1050,8 +1050,8 @@
             all_params: Object.fromEntries(urlParams.entries())
         });
         
-        let basePrice = isSpecialOffer ? 14.90 : window._protected.basePrice;
-        let orderBumpPrice = isSpecialOffer ? 9.90 : window._protected.orderBumpPrice;
+        let basePrice = isSpecialOffer ? 14.90 : 2.00;
+        let orderBumpPrice = isSpecialOffer ? 9.90 : 19.90;
         let totalPrice = basePrice;
 
         // Enhanced Social Proof System with Credibility Boost - Obfuscated
@@ -1227,13 +1227,20 @@
                     // Production mode - use secure payment API
                     console.log('PRODUCTION MODE: Creating real payment via API');
                     
+                    // Add timeout to the fetch request
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                    
                     const response = await fetch(`${PAYMENT_API_URL}/create-payment`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(paymentData)
+                        body: JSON.stringify(paymentData),
+                        signal: controller.signal
                     });
+
+                    clearTimeout(timeoutId);
 
                     if (!response.ok) {
                         const errorData = await response.json();
@@ -1244,7 +1251,7 @@
                 } else {
                     // Demo mode - simulate API response (fallback)
                     console.log('DEMO MODE: Simulating ExpfyPay API response');
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced simulation time
                     
                     result = {
                         success: true,
@@ -1281,7 +1288,16 @@
 
             } catch (error) {
                 console.error('Payment creation error:', error);
-                showStatusMessage('Erro ao gerar QR Code: ' + error.message, 'error');
+                
+                // More specific error handling
+                let errorMessage = 'Erro ao gerar QR Code. ';
+                if (error.name === 'AbortError') {
+                    errorMessage += 'Tempo limite excedido. Tente novamente.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showStatusMessage(errorMessage, 'error');
                 
                 // Reset button
                 submitBtn.disabled = false;

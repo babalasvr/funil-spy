@@ -1,0 +1,108 @@
+# HTTP server - redirect to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name whatspy.pro www.whatspy.pro;
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name whatspy.pro www.whatspy.pro;
+
+    # SSL configuration
+    ssl_certificate /etc/letsencrypt/live/whatspy.pro/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/whatspy.pro/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Document root
+    root /var/www/funil-spy;
+    index index.html;
+
+    # Main funnel pages
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API endpoints - all /api/ routes to analytics service
+    location /api/ {
+        proxy_pass http://localhost:3001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Payment API proxy
+    location /api/payment/ {
+        proxy_pass http://localhost:3002/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Content-Type $content_type;
+        proxy_set_header Content-Length $content_length;
+        proxy_request_buffering off;
+        proxy_buffering off;
+    }
+
+    # Admin dashboard
+    location /admin {
+        proxy_pass http://localhost:3001/admin;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Admin Dashboard Extended
+    location /admin-dashboard {
+        proxy_pass http://localhost:3001/admin-dashboard;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Simple Dashboard
+    location /dashboard-simple {
+        proxy_pass http://localhost:3001/dashboard-simple;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Remarketing Dashboard
+    location /remarketing-dashboard {
+        proxy_pass http://localhost:3001/remarketing-dashboard;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}

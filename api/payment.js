@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-require('dotenv').config({ path: '../analytics/.env' });
+require('dotenv').config({ path: '/var/www/funil-spy/analytics/.env' });
 
 const app = express();
 const PORT = process.env.PAYMENT_API_PORT || 3002;
@@ -16,6 +16,22 @@ const EXPFY_CONFIG = {
     secretKey: process.env.EXPFY_SECRET_KEY,
     apiUrl: process.env.EXPFY_API_URL || 'https://pro.expfypay.com/api/v1'
 };
+
+// Simple in-memory cache for QR codes
+const qrCodeCache = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache cleaning interval
+setInterval(() => {
+    const now = Date.now();
+    // Clean expired cache entries
+    Object.keys(qrCodeCache).forEach(key => {
+        if (now > qrCodeCache[key].expiresAt) {
+            delete qrCodeCache[key];
+        }
+    });
+    console.log(`🧹 Cache cleaned, ${Object.keys(qrCodeCache).length} entries remaining`);
+}, 10 * 60 * 1000); // Clean every 10 minutes
 
 // Debug configuration loading
 console.log('🔧 Loading ExpfyPay configuration...');
@@ -41,11 +57,12 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         service: 'payment-api',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        cacheSize: Object.keys(qrCodeCache).length
     });
 });
 
-// Create payment endpoint
+// Create payment endpoint with caching
 app.post('/create-payment', async (req, res) => {
     try {
         console.log('🔄 Processing payment request:', {
@@ -53,6 +70,20 @@ app.post('/create-payment', async (req, res) => {
             customer: req.body.customer?.name,
             external_id: req.body.external_id
         });
+
+        // Create a cache key based on the payment data
+        const cacheKey = `${req.body.amount}-${req.body.customer?.document}-${req.body.description}`;
+        const now = Date.now();
+
+        // Check if we have a valid cached response
+        if (qrCodeCache[cacheKey] && now < qrCodeCache[cacheKey].expiresAt) {
+            console.log('✅ Cache hit for payment request');
+            return res.json({
+                success: true,
+                data: qrCodeCache[cacheKey].data,
+                cached: true
+            });
+        }
 
         const paymentData = {
             amount: req.body.amount,
@@ -79,7 +110,7 @@ app.post('/create-payment', async (req, res) => {
             };
         }
 
-        // Make request to ExpfyPay API
+        // Make request to ExpfyPay API with reduced timeout
         const response = await axios.post(
             `${EXPFY_CONFIG.apiUrl}/payments`,
             paymentData,
@@ -89,16 +120,23 @@ app.post('/create-payment', async (req, res) => {
                     'X-Public-Key': EXPFY_CONFIG.publicKey,
                     'X-Secret-Key': EXPFY_CONFIG.secretKey
                 },
-                timeout: 30000 // 30 second timeout
+                timeout: 8000, // Reduced to 8 seconds for faster response
             }
         );
 
         console.log('✅ Payment created successfully:', response.data.transaction_id);
 
+        // Cache the response
+        qrCodeCache[cacheKey] = {
+            data: response.data,
+            expiresAt: now + CACHE_TTL
+        };
+
         // Return successful response
         res.json({
             success: true,
-            data: response.data
+            data: response.data,
+            cached: false
         });
 
     } catch (error) {
@@ -151,7 +189,7 @@ app.get('/payment-status/:transaction_id', async (req, res) => {
                     'X-Public-Key': EXPFY_CONFIG.publicKey,
                     'X-Secret-Key': EXPFY_CONFIG.secretKey
                 },
-                timeout: 10000
+                timeout: 8000 // Reduced timeout
             }
         );
 
