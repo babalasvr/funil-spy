@@ -1318,6 +1318,14 @@
             // Set QR code image
             document.getElementById('qrCodeImage').src = paymentData.qr_code_image;
             
+            // Update PIX amount dynamically
+            const pixAmountElement = document.getElementById('pixAmount');
+            if (pixAmountElement) {
+                // Format the amount with Brazilian formatting (using comma as decimal separator)
+                const formattedAmount = parseFloat(paymentData.amount).toFixed(2).replace('.', ',');
+                pixAmountElement.textContent = formattedAmount;
+            }
+            
             console.log('QR Code displayed for transaction:', paymentData.transaction_id);
         }
 
