@@ -198,51 +198,95 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-primary {
-            background: var(--primary-blue);
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
             color: white;
         }
 
         .btn-primary:hover {
-            background: var(--primary-blue-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
-        .btn-secondary {
-            background: var(--gray-100);
+        .export-btn {
+            background: var(--white);
             color: var(--gray-700);
             border: 1px solid var(--gray-300);
         }
 
-        .btn-secondary:hover {
-            background: var(--gray-200);
+        .export-btn:hover {
+            background: var(--gray-50);
         }
 
-        /* Data Table */
-        .data-table-container {
-            background: var(--white);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-        }
-
-        .data-table-header {
-            padding: 24px;
-            border-bottom: 1px solid var(--gray-200);
+        /* Refresh indicator */
+        .refresh-indicator {
             display: flex;
             align-items: center;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* Data table */
+        .data-table-header {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
 
         .data-table-title {
             font-size: 1.25rem;
             font-weight: 600;
             color: var(--gray-900);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px 24px;
+            color: var(--gray-500);
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .data-table-container {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
         }
 
         .data-table {
@@ -252,141 +296,113 @@
 
         .data-table th {
             background: var(--gray-50);
-            padding: 16px;
+            padding: 16px 24px;
             text-align: left;
-            font-size: 0.875rem;
             font-weight: 600;
             color: var(--gray-700);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             border-bottom: 1px solid var(--gray-200);
         }
 
         .data-table td {
-            padding: 16px;
-            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gray-100);
             font-size: 0.875rem;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
         }
 
         .data-table tr:hover {
             background: var(--gray-50);
         }
 
-        /* Status badges */
         .status-badge {
-            display: inline-flex;
-            align-items: center;
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status-pending {
-            background: var(--warning-orange);
-            color: white;
         }
 
         .status-converted {
-            background: var(--success-green);
-            color: white;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-orange);
         }
 
         .status-abandoned {
-            background: var(--danger-red);
-            color: white;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-red);
         }
 
         .status-active {
-            background: var(--primary-blue);
-            color: white;
-        }
-
-        /* Device badges */
-        .device-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 500;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-blue);
         }
 
         .device-mobile {
-            background: var(--gray-100);
-            color: var(--gray-700);
+            color: var(--primary-blue);
         }
 
         .device-desktop {
-            background: var(--primary-blue);
-            color: white;
-        }
-
-        /* Loading state */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: var(--gray-500);
-        }
-
-        .loading-spinner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--gray-300);
-            border-top: 2px solid var(--primary-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 12px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Auto-refresh indicator */
-        .refresh-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.875rem;
             color: var(--gray-600);
         }
 
-        .refresh-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success-green);
-            animation: pulse 2s infinite;
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--gray-300);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .action-btn:hover {
+            background: var(--gray-50);
         }
 
-        /* Export button */
-        .export-btn {
-            background: var(--success-green);
-            color: white;
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--gray-200);
         }
 
-        .export-btn:hover {
-            background: #059669;
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray-500);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        /* Sales table */
+        .sales-table th, .sales-table td {
+            padding: 12px 16px;
+        }
+
+        .sales-table td {
+            font-size: 0.8125rem;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .dashboard-container {
-                padding: 16px;
-            }
-
             .dashboard-header {
                 padding: 24px;
-                text-align: center;
             }
 
             .dashboard-header h1 {
@@ -394,7 +410,7 @@
             }
 
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
 
             .controls-grid {
@@ -417,6 +433,12 @@
         <div class="dashboard-header">
             <h1>📊 Dashboard de Leads</h1>
             <p>Monitoramento completo do funil de conversão - Dados em tempo real</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('leads')">Leads</div>
+            <div class="tab" onclick="switchTab('sales')">Vendas</div>
         </div>
 
         <!-- Stats Grid -->
@@ -563,6 +585,7 @@
                 Carregando dados do dashboard...
             </div>
 
+            <!-- Leads Table -->
             <table class="data-table" id="leadsTable" style="display: none;">
                 <thead>
                     <tr>
@@ -581,8 +604,122 @@
                     <!-- Dados serão inseridos dinamicamente -->
                 </tbody>
             </table>
+
+            <!-- Sales Table -->
+            <table class="data-table sales-table" id="salesTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Cliente</th>
+                        <th>E-mail</th>
+                        <th>Valor</th>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                        <th>ID Transação</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTableBody">
+                    <!-- Dados de vendas serão inseridos dinamicamente -->
+                </tbody>
+            </table>
         </div>
     </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide tables
+            if (tabName === 'leads') {
+                document.getElementById('leadsTable').style.display = 'table';
+                document.getElementById('salesTable').style.display = 'none';
+                document.querySelector('.data-table-title').textContent = '📋 Detalhes dos Leads';
+            } else {
+                document.getElementById('leadsTable').style.display = 'none';
+                document.getElementById('salesTable').style.display = 'table';
+                document.querySelector('.data-table-title').textContent = '💰 Detalhes das Vendas';
+                loadSalesData();
+            }
+        }
+        
+        // Load sales data
+        async function loadSalesData() {
+            try {
+                document.getElementById('loadingState').style.display = 'flex';
+                document.getElementById('salesTable').style.display = 'none';
+                
+                const period = document.getElementById('periodFilter').value;
+                const response = await fetch(`/api/sales?period=${period}`);
+                const sales = await response.json();
+                
+                updateSalesTable(sales);
+            } catch (error) {
+                console.error('Error loading sales data:', error);
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('salesTable').style.display = 'table';
+            }
+        }
+        
+        // Update sales table
+        function updateSalesTable(sales) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = '';
+            
+            if (!sales || sales.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                            📭 Nenhuma venda encontrada para os filtros selecionados
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('tableCount').textContent = '0';
+                return;
+            }
+            
+            document.getElementById('tableCount').textContent = sales.length;
+            
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                const saleDate = new Date(sale.created_at);
+                const formattedDate = saleDate.toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const amount = parseFloat(sale.amount).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+                
+                const saleType = sale.order_bump ? 'Venda + Order Bump' : 'Venda Normal';
+                const statusClass = sale.status === 'paid' ? 'status-converted' : 'status-pending';
+                const statusText = sale.status === 'paid' ? 'Pago' : 'Pendente';
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${sale.customer_name || '-'}</td>
+                    <td>${sale.customer_email || '-'}</td>
+                    <td>${amount}</td>
+                    <td>${saleType}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${sale.transaction_id}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+    </script>
 
     <script src="admin-dashboard.js"></script>
     

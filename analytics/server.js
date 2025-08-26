@@ -15,6 +15,9 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = 3001;
 
+// Set timezone to São Paulo/Brazil
+process.env.TZ = 'America/Sao_Paulo';
+
 // Initialize services
 const remarketing = new RemarketingService('./analytics.db');
 const whatsapp = new WhatsAppService({ debug: true });
@@ -93,7 +96,35 @@ db.serialize(() => {
         customer_data TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+    
+    // Sales table for detailed sales tracking
+    db.run(`CREATE TABLE IF NOT EXISTS sales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id TEXT UNIQUE NOT NULL,
+        session_id TEXT NOT NULL,
+        customer_name TEXT,
+        customer_email TEXT,
+        customer_document TEXT,
+        amount DECIMAL(10,2) NOT NULL,
+        order_bump BOOLEAN DEFAULT FALSE,
+        special_offer BOOLEAN DEFAULT FALSE,
+        payment_method TEXT DEFAULT 'PIX',
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 });
+
+// Utility function to get São Paulo time
+function getSaoPauloTime() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+}
+
+// Utility function to format date for database with São Paulo timezone
+function formatSaoPauloDate(date = new Date()) {
+    const saoPauloDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    return saoPauloDate.toISOString().replace('T', ' ').substring(0, 19);
+}
 
 // Generate session ID
 function generateSessionId() {
@@ -172,22 +203,89 @@ function updateSession(sessionId, pageUrl, utmParams, deviceType) {
             db.run(`UPDATE sessions SET 
                 last_page = ?, 
                 total_events = total_events + 1,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = ?
                 WHERE session_id = ?`, 
-                [pageUrl, sessionId]);
+                [pageUrl, formatSaoPauloDate(), sessionId]);
         } else {
             // Create new session
             db.run(`INSERT INTO sessions (
                 session_id, first_page, last_page, total_events,
-                utm_source, utm_medium, utm_campaign, device_type
-            ) VALUES (?, ?, ?, 1, ?, ?, ?, ?)`, [
+                utm_source, utm_medium, utm_campaign, device_type, created_at, updated_at
+            ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`, [
                 sessionId, pageUrl, pageUrl,
                 utmParams.utm_source, utmParams.utm_medium, 
-                utmParams.utm_campaign, deviceType
+                utmParams.utm_campaign, deviceType,
+                formatSaoPauloDate(), formatSaoPauloDate()
             ]);
         }
     });
 }
+
+// Endpoint to register sales data
+app.post('/api/register-sale', (req, res) => {
+    const {
+        transaction_id,
+        session_id,
+        customer_data,
+        amount,
+        order_bump,
+        special_offer
+    } = req.body;
+
+    // Insert sale record
+    const stmt = db.prepare(`INSERT INTO sales (
+        transaction_id, session_id, customer_name, customer_email, customer_document,
+        amount, order_bump, special_offer, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+    stmt.run([
+        transaction_id,
+        session_id,
+        customer_data?.name || '',
+        customer_data?.email || '',
+        customer_data?.document || '',
+        amount,
+        order_bump || false,
+        special_offer || false,
+        'paid',
+        formatSaoPauloDate(),
+        formatSaoPauloDate()
+    ], function(err) {
+        if (err) {
+            console.error('Error inserting sale:', err);
+            return res.status(500).json({ error: 'Failed to register sale' });
+        }
+
+        // Also update conversions table for backward compatibility
+        const conversionStmt = db.prepare(`INSERT INTO conversions (
+            session_id, conversion_type, value, order_bump, special_offer, customer_data, timestamp
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+
+        conversionStmt.run([
+            session_id,
+            'payment',
+            amount,
+            order_bump || false,
+            special_offer || false,
+            JSON.stringify(customer_data),
+            formatSaoPauloDate()
+        ], function(convErr) {
+            if (convErr) {
+                console.error('Error inserting conversion:', convErr);
+            }
+
+            // Update session as converted
+            db.run(`UPDATE sessions SET 
+                converted = 1, 
+                revenue = revenue + ?,
+                updated_at = ?
+                WHERE session_id = ?`, 
+                [amount, formatSaoPauloDate(), session_id]);
+
+            res.json({ success: true, saleId: this.lastID });
+        });
+    });
+});
 
 // Dashboard API Endpoints
 // Get dashboard stats
@@ -201,15 +299,17 @@ app.get('/api/stats', (req, res) => {
     
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
+    // Convert to São Paulo timezone for query
+    const cutoffDateString = formatSaoPauloDate(cutoffDate);
     
     // Get sessions and conversions for the period
-    db.all(`SELECT COUNT(*) as totalSessions FROM sessions WHERE created_at >= ?`, [cutoffDate.toISOString()], (err, sessionRows) => {
+    db.all(`SELECT COUNT(*) as totalSessions FROM sessions WHERE created_at >= ?`, [cutoffDateString], (err, sessionRows) => {
         if (err) {
             console.error('Error getting session stats:', err);
             return res.status(500).json({ error: 'Failed to get stats' });
         }
         
-        db.all(`SELECT COUNT(*) as totalConversions, SUM(value) as totalRevenue FROM conversions WHERE timestamp >= ?`, [cutoffDate.toISOString()], (err, conversionRows) => {
+        db.all(`SELECT COUNT(*) as totalConversions, SUM(value) as totalRevenue FROM conversions WHERE timestamp >= ?`, [cutoffDateString], (err, conversionRows) => {
             if (err) {
                 console.error('Error getting conversion stats:', err);
                 return res.status(500).json({ error: 'Failed to get stats' });
@@ -217,14 +317,15 @@ app.get('/api/stats', (req, res) => {
             
             // Get active users (last 5 minutes)
             const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-            db.all(`SELECT COUNT(DISTINCT session_id) as activeUsers FROM events WHERE timestamp >= ?`, [fiveMinutesAgo.toISOString()], (err, activeRows) => {
+            const fiveMinutesAgoString = formatSaoPauloDate(fiveMinutesAgo);
+            db.all(`SELECT COUNT(DISTINCT session_id) as activeUsers FROM events WHERE timestamp >= ?`, [fiveMinutesAgoString], (err, activeRows) => {
                 if (err) {
                     console.error('Error getting active users:', err);
                     return res.status(500).json({ error: 'Failed to get stats' });
                 }
                 
                 // Get investigations (numbers searched)
-                db.all(`SELECT COUNT(*) as totalInvestigations FROM events WHERE event_name = 'phone_search' AND timestamp >= ?`, [cutoffDate.toISOString()], (err, investigationRows) => {
+                db.all(`SELECT COUNT(*) as totalInvestigations FROM events WHERE event_name = 'phone_search' AND timestamp >= ?`, [cutoffDateString], (err, investigationRows) => {
                     if (err) {
                         console.error('Error getting investigations:', err);
                         return res.status(500).json({ error: 'Failed to get stats' });
@@ -269,6 +370,8 @@ app.get('/api/leads', (req, res) => {
     
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
+    // Convert to São Paulo timezone for query
+    const cutoffDateString = formatSaoPauloDate(cutoffDate);
     
     const query = `
         SELECT 
@@ -299,7 +402,7 @@ app.get('/api/leads', (req, res) => {
         LIMIT 1000
     `;
     
-    db.all(query, [cutoffDate.toISOString()], (err, rows) => {
+    db.all(query, [cutoffDateString], (err, rows) => {
         if (err) {
             console.error('Error getting leads data:', err);
             return res.status(500).json({ error: 'Failed to get leads' });
@@ -349,6 +452,47 @@ app.get('/api/leads', (req, res) => {
         });
         
         res.json(leads);
+    });
+});
+
+// Get sales data for dashboard
+app.get('/api/sales', (req, res) => {
+    const { period = '7d' } = req.query;
+    
+    let daysCutoff = 7;
+    if (period === '24h') daysCutoff = 1;
+    else if (period === '30d') daysCutoff = 30;
+    else if (period === 'all') daysCutoff = 365;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
+    // Convert to São Paulo timezone for query
+    const cutoffDateString = formatSaoPauloDate(cutoffDate);
+    
+    const query = `
+        SELECT 
+            id,
+            transaction_id,
+            customer_name,
+            customer_email,
+            amount,
+            order_bump,
+            special_offer,
+            status,
+            created_at
+        FROM sales
+        WHERE created_at >= ?
+        ORDER BY created_at DESC
+        LIMIT 1000
+    `;
+    
+    db.all(query, [cutoffDateString], (err, rows) => {
+        if (err) {
+            console.error('Error getting sales data:', err);
+            return res.status(500).json({ error: 'Failed to get sales' });
+        }
+        
+        res.json(rows);
     });
 });
 

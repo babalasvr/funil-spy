@@ -6,6 +6,9 @@ require('dotenv').config({ path: '/var/www/funil-spy/analytics/.env' });
 const app = express();
 const PORT = process.env.PAYMENT_API_PORT || 3002;
 
+// Set timezone to São Paulo/Brazil
+process.env.TZ = 'America/Sao_Paulo';
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -52,12 +55,23 @@ if (!EXPFY_CONFIG.publicKey || !EXPFY_CONFIG.secretKey) {
     console.log('✅ ExpfyPay credentials configured successfully');
 }
 
+// Utility function to get São Paulo time
+function getSaoPauloTime() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+}
+
+// Utility function to format date for database with São Paulo timezone
+function formatSaoPauloDate(date = new Date()) {
+    const saoPauloDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    return saoPauloDate.toISOString().replace('T', ' ').substring(0, 19);
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         service: 'payment-api',
-        timestamp: new Date().toISOString(),
+        timestamp: getSaoPauloTime(),
         cacheSize: Object.keys(qrCodeCache).length
     });
 });
@@ -210,14 +224,37 @@ app.get('/payment-status/:transaction_id', async (req, res) => {
 });
 
 // Payment webhook endpoint
-app.post('/webhook', (req, res) => {
+app.post('/webhook', async (req, res) => {
     try {
         console.log('📨 Webhook received:', req.body);
         
-        // Here you would process the webhook
-        // Update payment status in database
-        // Send confirmation emails
-        // etc.
+        // Process the webhook
+        const { transaction_id, status, amount, customer, external_id } = req.body;
+        
+        if (status === 'paid') {
+            console.log('💰 Payment confirmed for transaction:', transaction_id);
+            
+            // Extract session ID from external_id (format: funil_{timestamp}_{random})
+            const sessionId = external_id.split('_')[1] + '_' + external_id.split('_')[2];
+            
+            // Register sale in analytics system
+            try {
+                const analyticsResponse = await axios.post('http://localhost:3001/api/register-sale', {
+                    transaction_id,
+                    session_id: sessionId,
+                    customer_data: customer,
+                    amount: parseFloat(amount),
+                    order_bump: req.body.order_bump || false,
+                    special_offer: req.body.special_offer || false
+                }, {
+                    timeout: 5000
+                });
+                
+                console.log('✅ Sale registered in analytics:', analyticsResponse.data);
+            } catch (analyticsError) {
+                console.error('❌ Failed to register sale in analytics:', analyticsError.message);
+            }
+        }
         
         res.status(200).json({ received: true });
     } catch (error) {
@@ -241,6 +278,7 @@ app.listen(PORT, () => {
     console.log(`💳 Payment API running on port ${PORT}`);
     console.log(`🔗 Health check: http://localhost:${PORT}/health`);
     console.log(`🔑 Using ExpfyPay API: ${EXPFY_CONFIG.apiUrl}`);
+    console.log(`🕒 Timezone set to: ${process.env.TZ}`);
 });
 
 module.exports = app;

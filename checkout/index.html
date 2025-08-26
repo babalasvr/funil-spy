@@ -1387,12 +1387,68 @@
             document.getElementById('step2').classList.remove('active');
             document.getElementById('step3').classList.add('active');
             
+            // Send sales data to analytics system
+            registerSale();
+            
             showStatusMessage('🎉 Pagamento confirmado! Redirecionando para a página de agradecimento...', 'success');
             
             setTimeout(() => {
                 // Redirect to thank you page
                 window.location.href = 'obrigado.html';
             }, 3000);
+        }
+
+        // Register sale in analytics system
+        async function registerSale() {
+            try {
+                const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+                const transactionData = currentTransaction || {};
+                
+                // Extract session ID from URL or generate one
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('session_id') || generateSessionId();
+                
+                // Check if order bump was selected
+                const orderBumpCheckbox = document.getElementById('orderBumpCheckbox');
+                const hasOrderBump = orderBumpCheckbox && orderBumpCheckbox.checked;
+                
+                // Check if special offer was used
+                const isSpecialOffer = urlParams.get('special_offer') === 'true';
+                
+                // Send sale data to analytics API
+                const response = await fetch('http://localhost:3001/api/register-sale', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        transaction_id: transactionData.transaction_id || 'demo_' + Date.now(),
+                        session_id: sessionId,
+                        customer_data: {
+                            name: customerData.name,
+                            email: customerData.email,
+                            document: customerData.cpf,
+                            phone: customerData.phone
+                        },
+                        amount: parseFloat(transactionData.amount || totalPrice),
+                        order_bump: hasOrderBump,
+                        special_offer: isSpecialOffer
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Sale registered in analytics system');
+                } else {
+                    console.error('❌ Failed to register sale in analytics system');
+                }
+            } catch (error) {
+                console.error('Error registering sale:', error);
+            }
+        }
+
+        // Generate session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         function showStatusMessage(message, type) {

@@ -9,6 +9,9 @@ let dashboardData = {
 let autoRefreshInterval;
 const API_BASE = '/api';
 
+// Set timezone to São Paulo/Brazil
+const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
@@ -196,308 +199,136 @@ function updateLeadsTable(leads) {
         return;
     }
 
+    document.getElementById('tableCount').textContent = leads.length;
+    
     leads.forEach(lead => {
         const row = createLeadRow(lead);
         tbody.appendChild(row);
     });
-
-    document.getElementById('tableCount').textContent = leads.length;
 }
 
-// Create lead table row
+// Create lead row
 function createLeadRow(lead) {
-    const tr = document.createElement('tr');
+    const row = document.createElement('tr');
     
-    tr.innerHTML = `
-        <td>
-            <div style="font-weight: 500;">${formatDateTime(lead.created_at)}</div>
-            <div style="font-size: 0.75rem; color: var(--gray-500);">${getTimeAgo(lead.created_at)}</div>
-        </td>
-        <td>
-            <div style="font-weight: 500; margin-bottom: 4px;">${lead.name || 'N/A'}</div>
-            <div style="font-size: 0.75rem; color: var(--gray-600);">${lead.email || 'N/A'}</div>
-            <div style="font-size: 0.75rem; color: var(--gray-600);">${lead.phone || 'N/A'}</div>
-            ${lead.cpf ? `<div style="font-size: 0.75rem; color: var(--gray-600);">CPF: ${formatCPF(lead.cpf)}</div>` : ''}
-        </td>
-        <td>
-            <div style="font-weight: 500; font-family: monospace;">${lead.investigated_number || 'N/A'}</div>
-            ${lead.target_type ? `<div style="font-size: 0.75rem; color: var(--gray-600);">Alvo: ${lead.target_type}</div>` : ''}
-            ${lead.whatsapp_photo ? `<div style="font-size: 0.75rem; color: var(--gray-600);">📸 Foto encontrada</div>` : ''}
-        </td>
-        <td>
-            <div style="font-size: 0.75rem;">
-                ${lead.funnel_steps ? formatFunnelSteps(lead.funnel_steps) : 'N/A'}
-            </div>
-            <div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 4px;">
-                ${lead.pages_visited || 0} páginas visitadas
-            </div>
-        </td>
-        <td>
-            <div style="font-size: 0.75rem;">
-                ${lead.utm_source || 'Direto'}
-                ${lead.utm_campaign ? `<br><span style="color: var(--gray-600);">${lead.utm_campaign}</span>` : ''}
-            </div>
-        </td>
-        <td>
-            <span class="device-badge device-${lead.device_type || 'desktop'}">
-                ${lead.device_type === 'mobile' ? '📱' : '🖥️'} ${lead.device_type || 'Desktop'}
-            </span>
-            <div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 4px;">
-                ${lead.browser || 'N/A'} • ${lead.os || 'N/A'}
-            </div>
-        </td>
-        <td>
-            <span class="status-badge status-${getLeadStatus(lead)}">
-                ${getLeadStatusText(lead)}
-            </span>
-            ${lead.conversion_date ? `<div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 4px;">${formatDateTime(lead.conversion_date)}</div>` : ''}
-        </td>
-        <td>
-            <div style="font-weight: 500;">
-                ${lead.revenue ? formatCurrency(lead.revenue) : '-'}
-            </div>
-            ${lead.order_bump ? '<div style="font-size: 0.75rem; color: var(--success-green);">+ Order Bump</div>' : ''}
-        </td>
-        <td>
-            <button class="btn btn-secondary" onclick="viewLeadDetails('${lead.session_id}')" style="font-size: 0.75rem; padding: 6px 12px;">
-                👁️ Ver
-            </button>
-        </td>
-    `;
-
-    return tr;
-}
-
-// Helper functions
-function formatNumber(num) {
-    return new Intl.NumberFormat('pt-BR').format(num);
-}
-
-function formatCurrency(value) {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(value);
-}
-
-function formatDateTime(dateString) {
-    return new Intl.DateTimeFormat('pt-BR', {
+    // Format date in São Paulo timezone
+    const createdAt = new Date(lead.created_at);
+    const formattedDate = createdAt.toLocaleString('pt-BR', {
+        timeZone: SAO_PAULO_TIMEZONE,
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-    }).format(new Date(dateString));
-}
-
-function getTimeAgo(dateString) {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 60) return `há ${diffMins}min`;
-    if (diffHours < 24) return `há ${diffHours}h`;
-    return `há ${diffDays}d`;
-}
-
-function formatCPF(cpf) {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
-
-function formatFunnelSteps(steps) {
-    const stepNames = {
-        'page_view_home': '🏠 Início',
-        'page_view_numero': '📱 Número',
-        'page_view_carregando': '⏳ Carregando',
-        'page_view_relatorio': '📊 Relatório',
-        'page_view_checkout': '💳 Checkout',
-        'form_started': '📝 Formulário',
-        'qr_generated': '📱 QR Code',
-        'payment_completed': '✅ Pagamento'
-    };
-
-    if (typeof steps === 'string') {
-        try {
-            steps = JSON.parse(steps);
-        } catch {
-            return 'N/A';
-        }
-    }
-
-    if (Array.isArray(steps)) {
-        return steps.map(step => stepNames[step] || step).join(' → ');
-    }
-
-    return 'N/A';
-}
-
-function getLeadStatus(lead) {
-    if (lead.converted) return 'converted';
-    if (lead.abandoned) return 'abandoned';
-    if (lead.active) return 'active';
-    return 'pending';
-}
-
-function getLeadStatusText(lead) {
-    if (lead.converted) return 'Convertido';
-    if (lead.abandoned) return 'Abandonado';
-    if (lead.active) return 'Ativo';
-    return 'Pendente';
-}
-
-// Filter and search functions
-function filterData() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    });
     
-    let filteredLeads = [...dashboardData.leads];
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-        filteredLeads = filteredLeads.filter(lead => {
-            const status = getLeadStatus(lead);
-            return status === statusFilter;
-        });
+    // Format revenue
+    const revenue = lead.revenue ? formatCurrency(lead.revenue) : '-';
+    
+    // Determine status
+    let statusText = 'Pendente';
+    let statusClass = 'status-pending';
+    
+    if (lead.converted) {
+        statusText = 'Convertido';
+        statusClass = 'status-converted';
+    } else if (lead.abandoned) {
+        statusText = 'Abandonado';
+        statusClass = 'status-abandoned';
+    } else if (lead.active) {
+        statusText = 'Ativo';
+        statusClass = 'status-active';
     }
-
-    // Apply search filter
-    if (searchQuery) {
-        filteredLeads = filteredLeads.filter(lead => {
-            const searchFields = [
-                lead.name,
-                lead.email,
-                lead.phone,
-                lead.investigated_number,
-                lead.cpf
-            ];
-            
-            return searchFields.some(field => 
-                field && field.toLowerCase().includes(searchQuery)
-            );
-        });
-    }
-
-    updateLeadsTable(filteredLeads);
-}
-
-// Utility functions
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-function showError(message) {
-    alert(message); // Simple error display, can be enhanced
+    
+    // Device icon
+    const deviceIcon = lead.device_type === 'mobile' ? '📱' : '💻';
+    const deviceClass = lead.device_type === 'mobile' ? 'device-mobile' : 'device-desktop';
+    
+    // Funnel progress
+    const funnelSteps = lead.funnel_steps ? lead.funnel_steps.length : 0;
+    
+    row.innerHTML = `
+        <td>
+            <div style="font-weight: 500;">${formattedDate}</div>
+        </td>
+        <td>
+            <div style="font-weight: 500;">${lead.name || '-'}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.email || '-'}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.phone || lead.cpf || '-'}</div>
+        </td>
+        <td>
+            <div>${lead.investigated_number || '-'}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.target_type || '-'}</div>
+        </td>
+        <td>
+            <div style="font-weight: 500;">${funnelSteps} etapas</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">visitou ${lead.pages_visited || 0} páginas</div>
+        </td>
+        <td>
+            <div style="font-weight: 500;">${lead.utm_source || '-'}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.utm_campaign || '-'}</div>
+        </td>
+        <td>
+            <div class="${deviceClass}">${deviceIcon} ${lead.device_type === 'mobile' ? 'Mobile' : 'Desktop'}</div>
+            <div style="font-size: 0.75rem; color: var(--gray-500);">${lead.browser || '-'}</div>
+        </td>
+        <td>
+            <span class="status-badge ${statusClass}">${statusText}</span>
+            ${lead.order_bump ? '<span class="status-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-orange); margin-left: 4px;">+ Order Bump</span>' : ''}
+        </td>
+        <td>
+            <div style="font-weight: 600;">${revenue}</div>
+        </td>
+        <td>
+            <button class="action-btn" onclick="viewLeadDetails('${lead.session_id}')">Ver detalhes</button>
+        </td>
+    `;
+    
+    return row;
 }
 
 // View lead details
 function viewLeadDetails(sessionId) {
     const lead = dashboardData.leads.find(l => l.session_id === sessionId);
-    if (lead) {
-        const details = `
-Detalhes do Lead:
+    if (!lead) return;
+    
+    alert(`Detalhes do Lead:\n\nSession ID: ${lead.session_id}\nNome: ${lead.name || '-'}\nEmail: ${lead.email || '-'}\nTelefone: ${lead.phone || '-'}\nCPF: ${lead.cpf || '-'}`);
+}
 
-📊 Informações Gerais:
-• Nome: ${lead.name || 'N/A'}
-• E-mail: ${lead.email || 'N/A'}
-• Telefone: ${lead.phone || 'N/A'}
-• CPF: ${lead.cpf ? formatCPF(lead.cpf) : 'N/A'}
+// Filter data based on status and search input
+function filterData() {
+    // This would implement filtering logic
+    console.log('Filtering data...');
+}
 
-📱 Número Investigado: ${lead.investigated_number || 'N/A'}
-👥 Tipo de Alvo: ${lead.target_type || 'N/A'}
-📸 Foto do WhatsApp: ${lead.whatsapp_photo ? 'Encontrada' : 'Não encontrada'}
+// Debounce function for search input
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
 
-🚀 Funil de Conversão:
-${formatFunnelSteps(lead.funnel_steps)}
+// Format number with thousands separator
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 
-📈 Origem do Tráfego:
-• Fonte: ${lead.utm_source || 'Direto'}
-• Campanha: ${lead.utm_campaign || 'N/A'}
+// Format currency (BRL)
+function formatCurrency(value) {
+    return parseFloat(value).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+}
 
-💻 Informações Técnicas:
-• Dispositivo: ${lead.device_type || 'N/A'}
-• Navegador: ${lead.browser || 'N/A'}
-• Sistema: ${lead.os || 'N/A'}
-
-💰 Status: ${getLeadStatusText(lead)}
-💵 Receita: ${lead.revenue ? formatCurrency(lead.revenue) : 'R$ 0,00'}
-        `;
-        
-        alert(details);
-    }
+// Show error message
+function showError(message) {
+    console.error(message);
 }
 
 // Export data to CSV
 function exportData() {
-    const period = document.getElementById('periodFilter').value;
-    const csvContent = generateCSV(dashboardData.leads);
-    downloadCSV(csvContent, `leads-relatorio-${period}-${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-function generateCSV(leads) {
-    const headers = [
-        'Data/Hora',
-        'Nome',
-        'E-mail',
-        'Telefone',
-        'CPF',
-        'Número Investigado',
-        'Tipo Alvo',
-        'Foto WhatsApp',
-        'Páginas Visitadas',
-        'Fonte UTM',
-        'Campanha UTM',
-        'Dispositivo',
-        'Navegador',
-        'Sistema',
-        'Status',
-        'Receita',
-        'Order Bump'
-    ].join(',');
-
-    const rows = leads.map(lead => [
-        formatDateTime(lead.created_at),
-        lead.name || '',
-        lead.email || '',
-        lead.phone || '',
-        lead.cpf || '',
-        lead.investigated_number || '',
-        lead.target_type || '',
-        lead.whatsapp_photo ? 'Sim' : 'Não',
-        lead.pages_visited || 0,
-        lead.utm_source || '',
-        lead.utm_campaign || '',
-        lead.device_type || '',
-        lead.browser || '',
-        lead.os || '',
-        getLeadStatusText(lead),
-        lead.revenue || 0,
-        lead.order_bump ? 'Sim' : 'Não'
-    ].map(field => `"${field}"`).join(','));
-
-    return [headers, ...rows].join('\n');
-}
-
-function downloadCSV(csvContent, filename) {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    alert('Funcionalidade de exportação em desenvolvimento');
 }

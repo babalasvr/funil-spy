@@ -61,12 +61,31 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(session_id) REFERENCES sessions(session_id)
     )`);
+    
+    // Sales table for detailed sales tracking
+    db.run(`CREATE TABLE IF NOT EXISTS sales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id TEXT UNIQUE NOT NULL,
+        session_id TEXT NOT NULL,
+        customer_name TEXT,
+        customer_email TEXT,
+        customer_document TEXT,
+        amount DECIMAL(10,2) NOT NULL,
+        order_bump BOOLEAN DEFAULT FALSE,
+        special_offer BOOLEAN DEFAULT FALSE,
+        payment_method TEXT DEFAULT 'PIX',
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
     // Create indexes for better performance
     db.run(`CREATE INDEX IF NOT EXISTS idx_events_session_id ON events(session_id)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_conversions_session_id ON conversions(session_id)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_sales_transaction_id ON sales(transaction_id)`);
     
     console.log('✅ Database tables created successfully!');
     
