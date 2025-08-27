@@ -3,153 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Obrigado pelo seu pagamento!</title>
+    <title>Obrigado pela Sua Compra!</title>
+    
+    <!-- UTM Tracking Script -->
+    <script
+      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+      data-utmify-prevent-xcod-sck
+      data-utmify-prevent-subids
+      async
+      defer
+    ></script>
+    
     <style>
-        :root {
-            --primary-green: #25D366;
-            --dark-green: #128C7E;
-            --background-color: #f5f5f5;
-            --text-dark: #2c3e50;
-            --white: #ffffff;
-            --border-radius: 12px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
         }
-
+        
         body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            color: var(--text-dark);
+            background-color: #f8f9fa;
+            color: #333;
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-
+        
         .container {
-            width: 100%;
-            max-width: 600px;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
         }
-
-        .card {
-            background-color: var(--white);
-            border-radius: var(--border-radius);
-            padding: 40px 30px;
-            box-shadow: var(--shadow);
+        
+        .thank-you-box {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin: 50px 0;
+            border: 1px solid #e0e0e0;
             text-align: center;
         }
-
-        .icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 25px;
-            color: white;
-            font-size: 40px;
+        
+        .header {
+            margin-bottom: 30px;
         }
-
-        h1 {
-            font-size: 2rem;
+        
+        .header h1 {
+            color: #4CAF50;
+            font-size: 32px;
             margin-bottom: 15px;
-            color: var(--dark-green);
         }
-
-        p {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            color: #555;
+        
+        .header p {
+            color: #666;
+            font-size: 18px;
         }
-
-        .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
-            color: white;
-            padding: 15px 30px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        
+        .confirmation-icon {
+            font-size: 80px;
+            color: #4CAF50;
+            margin-bottom: 30px;
         }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
-        }
-
-        .info {
-            background-color: #e8f4f8;
-            border-left: 4px solid var(--primary-green);
-            padding: 15px;
+        
+        .next-steps {
+            background-color: #f5f5f5;
+            padding: 25px;
             border-radius: 8px;
-            margin-top: 30px;
+            margin: 30px 0;
             text-align: left;
         }
-
-        .info h3 {
-            color: var(--dark-green);
+        
+        .next-steps h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        
+        .next-steps ol {
+            margin-left: 20px;
+        }
+        
+        .next-steps li {
             margin-bottom: 10px;
         }
-
-        .timer {
+        
+        .support-info {
+            margin: 30px 0;
+        }
+        
+        .support-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        .support-info p {
+            margin-bottom: 10px;
+        }
+        
+        .support-email {
+            color: #2196F3;
+            text-decoration: none;
             font-weight: bold;
-            color: var(--primary-green);
+        }
+        
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .button:hover {
+            background-color: #45a049;
+        }
+        
+        .order-details {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+        
+        .order-details h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .order-id {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 16px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .thank-you-box {
+                padding: 25px;
+                margin: 30px 0;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .confirmation-icon {
+                font-size: 60px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <div class="icon">✓</div>
-            <h1>Pagamento Confirmado!</h1>
-            <p>Obrigado pela sua compra. Seu acesso ao conteúdo premium foi liberado com sucesso.</p>
+        <div class="thank-you-box">
+            <div class="confirmation-icon">✅</div>
             
-            <a href="https://drive.google.com/drive/folders/1Kv9R4EBN1ock26Y3jK3uHnOEtl-ApxTD?usp=sharing" class="btn" id="accessButton">
-                Acessar Conteúdo
-            </a>
-            
-            <div class="info">
-                <h3>Instruções de Acesso</h3>
-                <p>Clique no botão acima para acessar o conteúdo premium no Google Drive.</p>
-                <p>Se você não for redirecionado automaticamente em <span class="timer" id="timer">10</span> segundos, clique no botão manualmente.</p>
+            <div class="header">
+                <h1>Obrigado pela Sua Compra!</h1>
+                <p>Seu pedido foi processado com sucesso</p>
             </div>
+            
+            <div class="order-details">
+                <h3>Detalhes do Pedido</h3>
+                <p>Plano: <strong id="orderTitle">Acesso Básico</strong></p>
+                <p>Descrição: <span id="orderDesc">Acesso ao sistema básico de monitoramento</span></p>
+                <p>Número do Pedido: <span class="order-id" id="orderNumber">WS-123456</span></p>
+                <p>Data da Compra: <span id="purchaseDate">26/08/2023</span></p>
+            </div>
+            
+            <div class="next-steps">
+                <h2>Próximos Passos:</h2>
+                <ol>
+                    <li><strong>Verifique seu e-mail</strong> - Enviamos as instruções de acesso para o endereço de e-mail fornecido durante a compra.</li>
+                    <li><strong>Instale o aplicativo</strong> - Siga as instruções no e-mail para instalar e configurar o app de monitoramento.</li>
+                    <li><strong>Ative sua conta</strong> - Use o código de ativação enviado por e-mail para ativar todos os recursos da sua compra.</li>
+                </ol>
+            </div>
+            
+            <div class="support-info">
+                <h3>Precisa de Ajuda?</h3>
+                <p>Nossa equipe de suporte está pronta para ajudar com qualquer dúvida.</p>
+                <p>E-mail: <a href="mailto:suporte@whatspy.pro" class="support-email">suporte@whatspy.pro</a></p>
+                <p>Horário de atendimento: Segunda a Sexta, 9h às 18h</p>
+            </div>
+            
+            <a href="../index.html" class="button">Voltar para a Página Inicial</a>
         </div>
     </div>
-
+    
     <script>
-        // Contador regressivo para redirecionamento automático
-        let seconds = 10;
-        const timerElement = document.getElementById('timer');
-        const accessButton = document.getElementById('accessButton');
+        // Gerar número de pedido aleatório
+        function generateOrderNumber() {
+            const prefix = "WS-";
+            const randomNum = Math.floor(100000 + Math.random() * 900000);
+            return prefix + randomNum;
+        }
         
-        // Substitua esta URL pelo link real do seu Google Drive
-        const driveLink = "https://drive.google.com/drive/folders/1Kv9R4EBN1ock26Y3jK3uHnOEtl-ApxTD?usp=sharing";
-        accessButton.href = driveLink;
+        // Formatar data atual
+        function getCurrentDate() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
         
-        const countdown = setInterval(() => {
-            seconds--;
-            timerElement.textContent = seconds;
+        // Mostrar informações de compra com base no parâmetro da URL
+        function showPurchaseInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const purchaseType = urlParams.get('purchase');
+            const orderTitle = document.getElementById('orderTitle');
+            const orderDesc = document.getElementById('orderDesc');
             
-            if (seconds <= 0) {
-                clearInterval(countdown);
-                // Redireciona automaticamente para o Google Drive
-                window.location.href = driveLink;
+            // Valores padrão
+            let title = "Acesso Básico";
+            let desc = "Acesso ao sistema básico de monitoramento";
+            
+            // Ajustar com base no tipo de compra
+            if (purchaseType === 'combo') {
+                title = "Kit Investigador Profissional";
+                desc = "Acesso Premium + Revelação Total + Alertas em Tempo Real";
+            } else if (purchaseType === 'recurso') {
+                title = "Revelador de Mensagens Ocultas";
+                desc = "Acesso Básico + Recursos de Revelação de Mensagens";
+            } else if (purchaseType === 'mini') {
+                title = "Mini Pacote de Alertas";
+                desc = "Acesso Básico + Sistema de Alertas";
             }
-        }, 1000);
+            
+            // Atualizar elementos na página
+            if (orderTitle) orderTitle.textContent = title;
+            if (orderDesc) orderDesc.textContent = desc;
+        }
+        
+        // Preencher informações dinâmicas
+        window.onload = function() {
+            document.getElementById('orderNumber').textContent = generateOrderNumber();
+            document.getElementById('purchaseDate').textContent = getCurrentDate();
+            showPurchaseInfo();
+            
+            // Registrar conversão para análise
+            if (typeof window.trackConversion === 'function') {
+                window.trackConversion('purchase_complete');
+            }
+        };
+    </script>
+    
+    <!-- Pixel Tracking Script -->
+    <script>
+      window.pixelId = "66ac66dd43136b1d66bddb65";
+      var a = document.createElement("script");
+      a.setAttribute("async", "");
+      a.setAttribute("defer", "");
+      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+      document.head.appendChild(a);
     </script>
 </body>
 </html>

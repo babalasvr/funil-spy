@@ -1453,11 +1453,11 @@
             // Send sales data to analytics system
             registerSale();
             
-            showStatusMessage('🎉 Pagamento confirmado! Redirecionando para a página de agradecimento...', 'success');
+            showStatusMessage('🎉 Pagamento confirmado! Redirecionando para a página de acesso...', 'success');
             
             setTimeout(() => {
-                // Redirect to thank you page
-                window.location.href = 'obrigado.html';
+                // Redirect to first upsell page instead of thank you page
+                window.location.href = 'upsell1.html';
             }, 3000);
         }
 
