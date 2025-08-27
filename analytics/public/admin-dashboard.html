@@ -288,6 +288,13 @@
             border: 1px solid var(--gray-200);
             overflow: hidden;
         }
+        
+        .table-scrollable-container {
+            max-height: 400px; /* Altura para mostrar aproximadamente 5 linhas */
+            overflow-y: auto;
+            overflow-x: auto; /* Adicionando barra de rolagem horizontal */
+            position: relative;
+        }
 
         .data-table {
             width: 100%;
@@ -316,7 +323,14 @@
             border-bottom: none;
         }
 
-        .data-table tr:hover {
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--gray-50);
+        }
+        
+        .data-table tbody tr:hover {
             background: var(--gray-50);
         }
 
@@ -418,12 +432,50 @@
             }
 
             .data-table-container {
-                overflow-x: auto;
+                overflow: hidden; /* Changed from overflow-x: auto to let the inner container handle scrolling */
+            }
+            
+            .table-scrollable-container {
+                max-height: 350px; /* Ligeiramente menor em telas pequenas */
+                overflow-x: auto; /* Garantindo que a barra horizontal apareça em telas pequenas */
             }
 
             .data-table {
                 min-width: 800px;
             }
+        }
+        
+        /* Scroll hint styles */
+        .scroll-hint {
+            text-align: center;
+            padding: 8px;
+            color: var(--gray-600);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .scroll-arrow {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        .scroll-arrow-horizontal {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce-horizontal 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+        }
+        
+        @keyframes bounce-horizontal {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
         }
     </style>
 </head>
@@ -585,43 +637,48 @@
                 Carregando dados do dashboard...
             </div>
 
-            <!-- Leads Table -->
-            <table class="data-table" id="leadsTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Data/Hora</th>
-                        <th>Dados do Lead</th>
-                        <th>Número Investigado</th>
-                        <th>Funil</th>
-                        <th>Origem</th>
-                        <th>Dispositivo</th>
-                        <th>Status</th>
-                        <th>Receita</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="leadsTableBody">
-                    <!-- Dados serão inseridos dinamicamente -->
-                </tbody>
-            </table>
+            <div class="table-scrollable-container">
+                <!-- Leads Table -->
+                <table class="data-table" id="leadsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Dados do Lead</th>
+                            <th>Número Investigado</th>
+                            <th>Funil</th>
+                            <th>Origem</th>
+                            <th>Dispositivo</th>
+                            <th>Status</th>
+                            <th>Receita</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                        <!-- Dados serão inseridos dinamicamente -->
+                    </tbody>
+                </table>
 
-            <!-- Sales Table -->
-            <table class="data-table sales-table" id="salesTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Data/Hora</th>
-                        <th>Cliente</th>
-                        <th>E-mail</th>
-                        <th>Valor</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th>ID Transação</th>
-                    </tr>
-                </thead>
-                <tbody id="salesTableBody">
-                    <!-- Dados de vendas serão inseridos dinamicamente -->
-                </tbody>
-            </table>
+                <!-- Sales Table -->
+                <table class="data-table sales-table" id="salesTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Cliente</th>
+                            <th>E-mail</th>
+                            <th>Valor</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>ID Transação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <!-- Dados de vendas serão inseridos dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="scroll-hint">
+                Role para visualizar mais itens <span class="scroll-arrow">↓</span> <span class="scroll-arrow-horizontal">→</span>
+            </div>
         </div>
     </div>
 
@@ -680,10 +737,72 @@
                     </tr>
                 `;
                 document.getElementById('tableCount').textContent = '0';
+                document.querySelector('.scroll-hint').style.display = 'none';
                 return;
             }
             
             document.getElementById('tableCount').textContent = sales.length;
+            
+            // Show vertical scroll hint only if enough rows
+            const showVerticalScroll = sales.length > 5;
+            
+            // Add sales to table
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                const saleDate = new Date(sale.created_at);
+                const formattedDate = saleDate.toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const amount = parseFloat(sale.amount).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+                
+                const saleType = sale.order_bump ? 'Venda + Order Bump' : 'Venda Normal';
+                const statusClass = sale.status === 'paid' ? 'status-converted' : 'status-pending';
+                const statusText = sale.status === 'paid' ? 'Pago' : 'Pendente';
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${sale.customer_name || '-'}</td>
+                    <td>${sale.customer_email || '-'}</td>
+                    <td>${amount}</td>
+                    <td>${saleType}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${sale.transaction_id}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Check for horizontal overflow after table is populated
+            setTimeout(() => {
+                const container = document.querySelector('.table-scrollable-container');
+                const table = document.getElementById('salesTable');
+                const showHorizontalScroll = table.offsetWidth > container.clientWidth;
+                
+                // Show/hide scroll hint based on overflow status
+                document.querySelector('.scroll-hint').style.display = 
+                    (showVerticalScroll || showHorizontalScroll) ? 'flex' : 'none';
+                
+                // Show/hide horizontal arrow based on horizontal overflow
+                const horizontalArrow = document.querySelector('.scroll-arrow-horizontal');
+                if (horizontalArrow) {
+                    horizontalArrow.style.display = showHorizontalScroll ? 'inline-block' : 'none';
+                }
+                
+                // Show/hide vertical arrow based on vertical overflow
+                const verticalArrow = document.querySelector('.scroll-arrow');
+                if (verticalArrow) {
+                    verticalArrow.style.display = showVerticalScroll ? 'inline-block' : 'none';
+                }
+            }, 100); // Small delay to ensure the table is rendered
             
             sales.forEach(sale => {
                 const row = document.createElement('tr');

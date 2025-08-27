@@ -226,15 +226,43 @@ function updateLeadsTable(leads) {
             </tr>
         `;
         document.getElementById('tableCount').textContent = '0';
+        document.querySelector('.scroll-hint').style.display = 'none';
         return;
     }
 
     document.getElementById('tableCount').textContent = leads.length;
     
+    // Show vertical scroll hint only if enough rows
+    const showVerticalScroll = leads.length > 5;
+    
+    // Add leads to table
     leads.forEach(lead => {
         const row = createLeadRow(lead);
         tbody.appendChild(row);
     });
+    
+    // Check for horizontal overflow after table is populated
+    setTimeout(() => {
+        const container = document.querySelector('.table-scrollable-container');
+        const table = document.getElementById('leadsTable');
+        const showHorizontalScroll = table.offsetWidth > container.clientWidth;
+        
+        // Show/hide scroll hint based on overflow status
+        document.querySelector('.scroll-hint').style.display = 
+            (showVerticalScroll || showHorizontalScroll) ? 'flex' : 'none';
+        
+        // Show/hide horizontal arrow based on horizontal overflow
+        const horizontalArrow = document.querySelector('.scroll-arrow-horizontal');
+        if (horizontalArrow) {
+            horizontalArrow.style.display = showHorizontalScroll ? 'inline-block' : 'none';
+        }
+        
+        // Show/hide vertical arrow based on vertical overflow
+        const verticalArrow = document.querySelector('.scroll-arrow');
+        if (verticalArrow) {
+            verticalArrow.style.display = showVerticalScroll ? 'inline-block' : 'none';
+        }
+    }, 100); // Small delay to ensure the table is rendered
 }
 
 // Create lead row
