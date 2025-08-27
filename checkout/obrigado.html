@@ -201,7 +201,7 @@
                 <p>Horário de atendimento: Segunda a Sexta, 9h às 18h</p>
             </div>
             
-            <a href="../index.html" class="button">Voltar para a Página Inicial</a>
+            <a href="https://drive.google.com/drive/folders/1Kv9R4EBN1ock26Y3jK3uHnOEtl-ApxTD?usp=drive_link" class="button" id="accessButton">Acessar Produto</a>
         </div>
     </div>
     
@@ -250,6 +250,25 @@
             if (orderDesc) orderDesc.textContent = desc;
         }
         
+        // Redirecionamento automático após 15 segundos
+        function setupAutoRedirect() {
+            const button = document.getElementById('accessButton');
+            let seconds = 15;
+            
+            // Atualizar texto do botão com contagem regressiva
+            button.innerHTML = `Acessar Produto (${seconds}s)`;
+            
+            const countdown = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    window.location.href = "https://drive.google.com/drive/folders/1Kv9R4EBN1ock26Y3jK3uHnOEtl-ApxTD?usp=drive_link";
+                } else {
+                    button.innerHTML = `Acessar Produto (${seconds}s)`;
+                }
+            }, 1000);
+        }
+        
         // Preencher informações dinâmicas
         window.onload = function() {
             document.getElementById('orderNumber').textContent = generateOrderNumber();
@@ -260,6 +279,9 @@
             if (typeof window.trackConversion === 'function') {
                 window.trackConversion('purchase_complete');
             }
+            
+            // Configurar redirecionamento automático
+            setupAutoRedirect();
         };
     </script>
     
