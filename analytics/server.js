@@ -4,10 +4,18 @@ const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
 const http = require('http');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const compression = require('compression');
 
 // Import lead capture routes
 const leadCaptureRoutes = require('./routes/lead-capture');
 const utmifyIntegrationRoutes = require('./routes/utmify-integration');
+const trackingRoutes = require('./routes/tracking-routes');
+const UTMifyFacebookBridge = require('./services/utmify-facebook-bridge');
+const FacebookIntegration = require('./services/facebook-integration');
+const SecurityConfig = require('./config/security-config');
+const MonitoringService = require('./services/monitoring-service');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,15 +36,67 @@ function formatSaoPauloDate(date = new Date()) {
     return saoPauloDate.toISOString().replace('T', ' ').substring(0, 19);
 }
 
+// Configurar middlewares de segurança
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.utmify.com.br", "https://connect.facebook.net"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://api.utmify.com.br", "https://graph.facebook.com"]
+        }
+    }
+}));
+
+// Instanciar serviços de tracking
+const bridge = new UTMifyFacebookBridge();
+const facebook = new FacebookIntegration();
+const monitoring = new MonitoringService();
+
+// Aplicar configurações de segurança
+SecurityConfig.configure(app);
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true,
+    credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(compression());
+
+// Middleware de monitoramento
+app.use((req, res, next) => {
+    const startTime = Date.now();
+    
+    res.on('finish', () => {
+        const responseTime = Date.now() - startTime;
+        monitoring.recordRequest(req, res, responseTime);
+    });
+    
+    next();
+});
 // Serve static files for tracking scripts only
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Use lead capture routes
 app.use('/api', leadCaptureRoutes);
 app.use('/api', utmifyIntegrationRoutes);
+
+// Usar rotas de tracking avançado
+app.use('/api/tracking', trackingRoutes(bridge, facebook, monitoring));
+
+// Endpoints de monitoramento
+app.get('/api/monitoring/metrics', (req, res) => {
+    res.json(monitoring.getMetrics());
+});
+
+app.get('/api/monitoring/health', (req, res) => {
+    const health = monitoring.getHealthStatus();
+    const statusCode = health.healthy ? 200 : 503;
+    res.status(statusCode).json(health);
+});
 
 // Database setup
 const db = new sqlite3.Database('./analytics.db');
@@ -117,10 +177,11 @@ db.serialize(() => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        service: 'analytics-service',
-        timestamp: new Date().toISOString()
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        service: 'analytics-service'
     });
 });
 
@@ -446,10 +507,43 @@ app.get(['/admin', '/dashboard*', '/admin-dashboard', '/remarketing-dashboard', 
     res.status(404).json({ error: 'Dashboard services removed for performance optimization' });
 });
 
+// Limpeza automática do cache (a cada hora)
+setInterval(() => {
+    try {
+        bridge.cleanupCache(24); // Limpar dados com mais de 24 horas
+    } catch (error) {
+        console.error('❌ Erro na limpeza do cache:', error);
+    }
+}, 60 * 60 * 1000); // 1 hora
+
+// Inicializar monitoramento
+monitoring.startMonitoring();
+
+// Relatórios diários de monitoramento
+setInterval(() => {
+    monitoring.generateDailyReport();
+}, 24 * 60 * 60 * 1000); // 24 horas
+
 // Start server
-server.listen(PORT, 'localhost', () => {
+server.listen(PORT, 'localhost', async () => {
     console.log(`🚀 Analytics service running on http://localhost:${PORT}`);
     console.log(`📋 Health check: http://localhost:${PORT}/health`);
+    console.log(`📈 API Tracking: http://localhost:${PORT}/api/tracking`);
     console.log(`⚠️  Dashboard services DISABLED for performance optimization`);
     console.log(`✅ Core tracking and payment integration services ACTIVE`);
+    
+    // Testar configuração do Facebook na inicialização
+    try {
+        const facebookTest = await facebook.testConnection();
+        if (facebookTest.success) {
+            console.log('✅ Facebook Pixel + Conversions API configurado corretamente');
+            monitoring.recordFacebookEvent('connection_test', true);
+        } else {
+            console.log('⚠️  Facebook não configurado - verifique as variáveis de ambiente');
+            monitoring.recordFacebookEvent('connection_test', false);
+        }
+    } catch (error) {
+        console.log('⚠️  Erro ao testar Facebook:', error.message);
+        monitoring.recordFacebookEvent('connection_test', false);
+    }
 });
