@@ -36,8 +36,12 @@ const whatsapp = new WhatsAppService({ debug: true });
 const socialProof = new SocialProofService('./analytics.db');
 const abTesting = new ABTestingService('./analytics.db');
 
-// Setup services
-remarketing.startAutomaticProcessing();
+// Setup services with error handling
+try {
+    remarketing.startAutomaticProcessing();
+} catch (error) {
+    console.error('Failed to start remarketing automatic processing:', error);
+}
 whatsapp.setupWebhooks(app);
 
 // WebSocket handling for real-time social proof
