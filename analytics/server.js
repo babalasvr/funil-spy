@@ -36,7 +36,7 @@ const whatsapp = new WhatsAppService({ debug: true });
 const socialProof = new SocialProofService('./analytics.db');
 const abTesting = new ABTestingService('./analytics.db');
 
-// Setup services with error handling
+// Setup services with error handlingg
 try {
     remarketing.startAutomaticProcessing();
 } catch (error) {
