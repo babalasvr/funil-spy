@@ -174,8 +174,9 @@ router.post('/checkout-start', async (req, res) => {
     try {
         const { checkoutData = {}, pageData = {} } = req.body;
         
-        // Validar dados do produto
-        if (!checkoutData.price || parseFloat(checkoutData.price) <= 0) {
+        // Validar dados do produto (aceitar tanto 'price' quanto 'value')
+        const price = checkoutData.price || checkoutData.value;
+        if (!price || parseFloat(price) <= 0) {
             return res.status(400).json({
                 success: false,
                 error: 'Preço do produto é obrigatório e deve ser maior que zero',
@@ -231,8 +232,9 @@ router.post('/purchase', async (req, res) => {
     try {
         const { purchaseData = {}, pageData = {} } = req.body;
         
-        // Validar dados da compra
-        if (!purchaseData.amount || parseFloat(purchaseData.amount) <= 0) {
+        // Validar dados da compra (aceitar tanto 'amount' quanto 'value')
+        const amount = purchaseData.amount || purchaseData.value;
+        if (!amount || parseFloat(amount) <= 0) {
             return res.status(400).json({
                 success: false,
                 error: 'Valor da compra é obrigatório e deve ser maior que zero',
@@ -349,9 +351,10 @@ router.post('/offer-view', async (req, res) => {
 
 /**
  * GET /api/tracking/session/:sessionId
+ * GET /api/tracking/session-report/:sessionId
  * Recupera relatório completo da sessão
  */
-router.get('/session/:sessionId', (req, res) => {
+router.get(['/session/:sessionId', '/session-report/:sessionId'], (req, res) => {
     try {
         const sessionId = req.params.sessionId;
         const report = bridge.getSessionReport(sessionId);
@@ -383,6 +386,7 @@ router.get('/pixel-code', async (req, res) => {
         res.json({
             success: true,
             message: 'Código do pixel gerado',
+            pixelCode: pixelCode,
             data: {
                 pixelCode: pixelCode,
                 instructions: {
@@ -404,9 +408,18 @@ router.get('/pixel-code', async (req, res) => {
 
 /**
  * POST /api/tracking/test
+ * GET /api/tracking/test-integration
  * Endpoint para testar a integração completa
  */
 router.post('/test', async (req, res) => {
+    await handleIntegrationTest(req, res);
+});
+
+router.get('/test-integration', async (req, res) => {
+    await handleIntegrationTest(req, res);
+});
+
+async function handleIntegrationTest(req, res) {
     try {
         // Testar configuração do Facebook
         const facebookTest = await facebook.testConnection();
@@ -432,7 +445,7 @@ router.post('/test', async (req, res) => {
             code: 'TEST_ERROR'
         });
     }
-});
+}
 
 /**
  * GET /api/tracking/health

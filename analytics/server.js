@@ -528,7 +528,7 @@ setInterval(() => {
 }, 24 * 60 * 60 * 1000); // 24 horas
 
 // Start server
-server.listen(PORT, 'localhost', async () => {
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`🚀 Analytics service running on http://localhost:${PORT}`);
     console.log(`📋 Health check: http://localhost:${PORT}/health`);
     console.log(`📈 API Tracking: http://localhost:${PORT}/api/tracking`);
