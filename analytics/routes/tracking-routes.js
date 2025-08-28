@@ -357,6 +357,16 @@ router.post('/offer-view', async (req, res) => {
 router.get(['/session/:sessionId', '/session-report/:sessionId'], (req, res) => {
     try {
         const sessionId = req.params.sessionId;
+        
+        // Verificar se sessionId foi fornecido
+        if (!sessionId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Session ID é obrigatório',
+                code: 'MISSING_SESSION_ID'
+            });
+        }
+        
         const report = bridge.getSessionReport(sessionId);
         
         res.json({
@@ -381,14 +391,47 @@ router.get(['/session/:sessionId', '/session-report/:sessionId'], (req, res) => 
  */
 router.get('/pixel-code', async (req, res) => {
     try {
-        const pixelCode = await facebook.generatePixelCode();
+        // Criar dados de evento básico para gerar o pixel code
+        const eventData = {
+            sessionId: 'pixel_generation',
+            eventName: 'PageView',
+            pageUrl: 'https://example.com',
+            customerData: {},
+            utmData: {
+                utm_source: 'direct',
+                utm_medium: 'none'
+            }
+        };
+        
+        const pixelCode = facebook.generatePixelCode(eventData);
+        
+        // Gerar código JavaScript completo do pixel
+        const jsCode = `
+<!-- Facebook Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${facebook.pixelId}');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=${facebook.pixelId}&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Facebook Pixel Code -->`;
         
         res.json({
             success: true,
             message: 'Código do pixel gerado',
-            pixelCode: pixelCode,
+            pixelCode: jsCode,
             data: {
-                pixelCode: pixelCode,
+                pixelCode: jsCode,
+                pixelId: facebook.pixelId,
                 instructions: {
                     placement: 'Insira este código no <head> de todas as páginas',
                     note: 'O código já inclui deduplicação automática com Conversions API'
@@ -421,15 +464,39 @@ router.get('/test-integration', async (req, res) => {
 
 async function handleIntegrationTest(req, res) {
     try {
+        console.log('🧪 Iniciando teste de integração...');
+        
         // Testar configuração do Facebook
-        const facebookTest = await facebook.testConnection();
+        let facebookTest;
+        try {
+            facebookTest = await facebook.testConnection();
+            console.log('✅ Teste Facebook concluído:', facebookTest.success);
+        } catch (error) {
+            console.error('❌ Erro no teste Facebook:', error.message);
+            facebookTest = {
+                success: false,
+                error: error.message
+            };
+        }
         
         // Testar bridge completo
-        const bridgeTest = await bridge.testIntegration();
+        let bridgeTest;
+        try {
+            bridgeTest = await bridge.testIntegration();
+            console.log('✅ Teste Bridge concluído:', bridgeTest.success);
+        } catch (error) {
+            console.error('❌ Erro no teste Bridge:', error.message);
+            bridgeTest = {
+                success: false,
+                error: error.message
+            };
+        }
+        
+        const overallSuccess = facebookTest.success && bridgeTest.success;
         
         res.json({
-            success: true,
-            message: 'Teste de integração concluído',
+            success: overallSuccess,
+            message: overallSuccess ? 'Teste de integração concluído com sucesso' : 'Teste de integração concluído com falhas',
             data: {
                 facebook: facebookTest,
                 bridge: bridgeTest,
@@ -442,7 +509,8 @@ async function handleIntegrationTest(req, res) {
         res.status(500).json({
             success: false,
             error: 'Erro interno do servidor',
-            code: 'TEST_ERROR'
+            code: 'TEST_ERROR',
+            details: error.message
         });
     }
 }
