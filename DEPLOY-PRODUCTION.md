@@ -183,51 +183,122 @@ npm run pm2-logs
 npm run health-check
 ```
 
-## 🔧 5. Configuração Nginx (Opcional)
+## 🔧 5. Configuração Nginx (Configuração Atual da VPS)
+
+**Arquivo de configuração atual:** `/etc/nginx/sites-available/descubra-zap.top`
 
 ```nginx
-# /etc/nginx/sites-available/funil-spy
+# Single server block for HTTP traffic - redirects to HTTPS when certificates are available
 server {
-    listen 80;
-    server_name seudominio.com www.seudominio.com;
+    server_name descubra-zap.top www.descubra-zap.top;
     
-    # Redirecionar para HTTPS
-    return 301 https://$server_name$request_uri;
+    root /var/www/funil-spy;
+    index index.html;
+    
+    # Configurações gerais
+    client_max_body_size 10M;
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    
+    # Página principal e arquivos estáticos
+    location / {
+        try_files $uri $uri/ /index.html;
+        expires 1h;
+        add_header Cache-Control "public, max-age=3600";
+    }
+    
+    # Diretórios de checkout
+    location /checkout/ {
+        try_files $uri $uri/ =404;
+        expires 0;
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate";
+        add_header Pragma "no-cache";
+    }
+    
+    # API de pagamentos
+    location /api/payment/ {
+        proxy_pass http://localhost:3002/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # API de analytics
+    location /api/track-enhanced {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Dashboard de analytics
+    location /analytics {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Admin dashboard
+    location /admin {
+        proxy_pass http://localhost:3001/admin;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/descubra-zap.top/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/descubra-zap.top/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 
 server {
-    listen 443 ssl http2;
-    server_name seudominio.com www.seudominio.com;
+    if ($host = www.descubra-zap.top) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
     
-    # Certificados SSL
-    ssl_certificate /path/to/certificate.crt;
-    ssl_certificate_key /path/to/private.key;
+    if ($host = descubra-zap.top) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
     
-    # Arquivos estáticos
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # API Analytics
-    location /api/ {
-        proxy_pass http://localhost:3001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    listen 80;
+    server_name descubra-zap.top www.descubra-zap.top;
+    return 404; # managed by Certbot
 }
 ```
 
+**Verificar configuração:**
 ```bash
-# Ativar site
-sudo ln -s /etc/nginx/sites-available/funil-spy /etc/nginx/sites-enabled/
+# Testar configuração
 sudo nginx -t
-sudo systemctl reload nginx
+
+# Reiniciar Nginx (se necessário)
+sudo systemctl restart nginx
+
+# Verificar status
+sudo systemctl status nginx
 ```
 
 ## 📊 6. Monitoramento
