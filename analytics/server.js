@@ -19,7 +19,7 @@ const MonitoringService = require('./services/monitoring-service');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Set timezone to São Paulo/Brazil
 process.env.TZ = 'America/Sao_Paulo';
