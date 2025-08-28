@@ -1,0 +1,52 @@
+{
+  "name": "funil-spy-production",
+  "version": "1.0.0",
+  "description": "Sistema de funil de vendas com analytics e tracking avançado",
+  "main": "index.html",
+  "scripts": {
+    "start": "node analytics/server.js",
+    "dev": "python -m http.server 8080",
+    "analytics": "cd analytics && npm install && node server.js",
+    "install-all": "npm install && cd analytics && npm install && cd ../api && npm install",
+    "build": "echo 'Build completed - static files ready'",
+    "deploy": "git add . && git commit -m 'Deploy to production' && git push origin main",
+    "production": "NODE_ENV=production node analytics/server.js",
+    "pm2-start": "pm2 start ecosystem.config.js",
+    "pm2-stop": "pm2 stop all",
+    "pm2-restart": "pm2 restart all",
+    "pm2-logs": "pm2 logs",
+    "setup-production": "npm run install-all && npm run build",
+    "health-check": "curl -f http://localhost:3001/health || exit 1"
+  },
+  "keywords": [
+    "funil",
+    "vendas",
+    "analytics",
+    "tracking",
+    "upsell",
+    "checkout"
+  ],
+  "author": "Funil Spy Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seu-usuario/funil-spy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seu-usuario/funil-spy/issues"
+  },
+  "homepage": "https://github.com/seu-usuario/funil-spy#readme"
+}

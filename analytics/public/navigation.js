@@ -14,34 +14,10 @@
         },
         pages: [
             {
-                name: 'Dashboard Principal',
-                url: 'admin-dashboard.html',
-                icon: '📊',
-                description: 'Relatório completo de leads e conversões'
-            },
-            {
-                name: 'Dashboard Simplificado',
-                url: 'dashboard-simple.html',
-                icon: '📈',
-                description: 'Métricas básicas em tempo real'
-            },
-            {
-                name: 'Dashboard Completo',
-                url: 'dashboard.html',
-                icon: '📋',
-                description: 'Analytics completo com gráficos avançados'
-            },
-            {
-                name: 'Remarketing',
-                url: 'remarketing-dashboard.html',
-                icon: '🎯',
-                description: 'Campanhas de remarketing e reengajamento'
-            },
-            {
-                name: 'Pixel Tracking',
-                url: 'pixel-tracking.js',
+                name: 'Tracking Script',
+                url: 'tracking.js',
                 icon: '📡',
-                description: 'Script de rastreamento (view source)',
+                description: 'Script de rastreamento básico (view source)',
                 target: '_blank'
             }
         ]
@@ -301,7 +277,7 @@
         return `
             <nav class="analytics-nav">
                 <div class="analytics-nav-container">
-                    <a href="admin-dashboard.html" class="analytics-nav-brand">
+                    <a href="/" class="analytics-nav-brand">
                         <span>${NAVIGATION_CONFIG.brand.icon}</span>
                         <span>${NAVIGATION_CONFIG.brand.name}</span>
                     </a>
@@ -334,7 +310,7 @@
         return `
             <div class="analytics-breadcrumb">
                 <div class="analytics-breadcrumb-container">
-                    <a href="admin-dashboard.html" class="analytics-breadcrumb-link">Analytics</a>
+                    <a href="/" class="analytics-breadcrumb-link">Analytics</a>
                     <span class="analytics-breadcrumb-separator">›</span>
                     <span class="analytics-breadcrumb-current">${page.name}</span>
                 </div>

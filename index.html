@@ -15,6 +15,9 @@
     <!-- Enhanced Analytics Tracking -->
     <script src="./analytics/public/enhanced-tracking.js"></script>
     
+    <!-- UTMify Pixel Integration -->
+    <script src="./analytics/public/utmify-pixel-integration.js"></script>
+    
     <title>Analise - Inicio</title>
     <style>
         :root {
@@ -338,11 +341,10 @@
             font-size: 14px;
         }
     </style>
-    <!-- Remarketing Integration -->
+    <!-- Basic Tracking Integration -->
     <script src="/analytics/public/tracking.js"></script>
-    <script src="/analytics/public/pixel-tracking.js"></script>
     <script>
-        // Initialize remarketing for this page
+        // Initialize basic tracking for this page
         if (window.FunnelAnalytics) {
             window.FunnelAnalytics.track('page_view_landing', {
                 source: 'main_page',
@@ -503,13 +505,6 @@
         });
     </script>
 
-<script>
-  window.pixelId = "66ac66dd43136b1d66bddb65";
-  var a = document.createElement("script");
-  a.setAttribute("async", "");
-  a.setAttribute("defer", "");
-  a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-  document.head.appendChild(a);
-</script>
+
 
 </body></html>

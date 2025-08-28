@@ -196,6 +196,7 @@ app.get('/payment-status/:transaction_id', async (req, res) => {
         
         console.log('🔍 Checking payment status for:', transactionId);
 
+        // Use the correct endpoint for checking payment status
         const response = await axios.get(
             `${EXPFY_CONFIG.apiUrl}/payments/${transactionId}`,
             {
@@ -207,13 +208,42 @@ app.get('/payment-status/:transaction_id', async (req, res) => {
             }
         );
 
+        console.log('✅ Payment status response:', response.data);
+
+        // Check if the payment status is 'paid' in the response
+        let paymentStatus = '';
+        if (response.data && response.data.status) {
+            paymentStatus = response.data.status;
+        } else if (response.data && response.data.data && response.data.data.status) {
+            // Handle nested response structure
+            paymentStatus = response.data.data.status;
+        }
+
+        console.log('📊 Payment status:', paymentStatus);
+
         res.json({
             success: true,
-            data: response.data
+            data: response.data,
+            payment_status: paymentStatus
         });
 
     } catch (error) {
         console.error('❌ Status check failed:', error.message);
+        
+        // Better error handling - check if it's a 404 and provide more details
+        if (error.response) {
+            console.error('❌ Status check HTTP error:', error.response.status, error.response.statusText);
+            console.error('❌ Status check response data:', error.response.data);
+            
+            // If it's a 404, it might be that the transaction ID is invalid or expired
+            if (error.response.status === 404) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'transaction_not_found',
+                    message: 'Transação não encontrada. O ID da transação pode ser inválido ou expirado.'
+                });
+            }
+        }
         
         res.status(500).json({
             success: false,

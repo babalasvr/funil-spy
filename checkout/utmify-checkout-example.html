@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Integração UTMify</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .utmify-status {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        .utmify-status.active {
+            background: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .utmify-status.inactive {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .progress-bar {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #4facfe;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .utm-info {
+            background: #f0f8ff;
+            border: 1px solid #4facfe;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+
+        .utm-info h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .utm-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .utm-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .debug-panel {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Checkout UTMify</h1>
+            <p>Demonstração de Integração Completa com UTMify</p>
+        </div>
+
+        <div class="utmify-status" id="utmifyStatus">
+            <strong>🔄 Verificando integração UTMify...</strong>
+        </div>
+
+        <div class="utm-info" id="utmInfo" style="display: none;">
+            <h4>📊 Dados UTM Capturados:</h4>
+            <div class="utm-data" id="utmData"></div>
+        </div>
+
+        <div class="content">
+            <form id="checkoutForm" class="checkout-form" data-utmify-form>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="form-section">
+                    <h3>👤 Dados Pessoais</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Nome Completo *</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-mail *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Telefone *</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cpf">CPF *</label>
+                            <input type="text" id="cpf" name="cpf" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📍 Endereço de Entrega</h3>
+                    <div class="form-group">
+                        <label for="cep">CEP *</label>
+                        <input type="text" id="cep" name="cep" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Endereço *</label>
+                        <input type="text" id="address" name="address" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Cidade *</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">Estado *</label>
+                            <select id="state" name="state" required>
+                                <option value="">Selecione...</option>
+                                <option value="SP">São Paulo</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="PR">Paraná</option>
+                                <option value="SC">Santa Catarina</option>
+                                <!-- Adicione outros estados conforme necessário -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>💼 Informações Comerciais (Opcional)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="company">Empresa</label>
+                            <input type="text" id="company" name="company">
+                        </div>
+                        <div class="form-group">
+                            <label for="position">Cargo</label>
+                            <input type="text" id="position" name="position">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <h3>📋 Resumo do Pedido</h3>
+                    <div class="order-item">
+                        <span>Produto Premium UTMify</span>
+                        <span>R$ 297,00</span>
+                    </div>
+                    <div class="order-item">
+                        <span>Frete</span>
+                        <span>R$ 15,00</span>
+                    </div>
+                    <div class="order-total">
+                        <span>Total</span>
+                        <span>R$ 312,00</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    🚀 Finalizar Pedido
+                </button>
+            </form>
+
+            <div class="debug-panel" id="debugPanel">
+                <strong>🔧 Debug Console:</strong><br>
+                <div id="debugLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Simulação do script UTMify (remova em produção e use o real) -->
+    <script>
+        // Simulação do UTMify para demonstração
+        window.utmify = {
+            track: function(event, data) {
+                console.log('UTMify Track:', event, data);
+                addDebugLog(`UTMify: ${event} - ${JSON.stringify(data)}`);
+            },
+            getData: function() {
+                return {
+                    utm_source: 'google',
+                    utm_medium: 'cpc',
+                    utm_campaign: 'demo_campaign'
+                };
+            },
+            getSessionId: function() {
+                return 'utmify_session_' + Date.now();
+            }
+        };
+        
+        // Disparar evento de carregamento do UTMify
+        setTimeout(() => {
+            window.dispatchEvent(new Event('utmifyLoaded'));
+        }, 500);
+    </script>
+
+    <!-- Script do UTMify Lead Tracker -->
+    <script src="/analytics/public/utmify-lead-tracker.js"></script>
+
+    <script>
+        // Máscaras para campos
+        function applyCPFMask(value) {
+            return value
+                .replace(/\D/g, '')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                .replace(/(-\d{2})\d+?$/, '$1');
+        }
+
+        function applyPhoneMask(value) {
+            return value
+                .replace(/\D/g, '')
+                .replace(/(\d{2})(\d)/, '($1) $2')
+                .replace(/(\d{4,5})(\d{4})/, '$1-$2');
+        }
+
+        function applyCEPMask(value) {
+            return value
+                .replace(/\D/g, '')
+                .replace(/(\d{5})(\d)/, '$1-$2')
+                .replace(/(-\d{3})\d+?$/, '$1');
+        }
+
+        // Aplicar máscaras
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            e.target.value = applyCPFMask(e.target.value);
+        });
+
+        document.getElementById('phone').addEventListener('input', function(e) {
+            e.target.value = applyPhoneMask(e.target.value);
+        });
+
+        document.getElementById('cep').addEventListener('input', function(e) {
+            e.target.value = applyCEPMask(e.target.value);
+        });
+
+        // Atualizar progresso do formulário
+        function updateProgress() {
+            const form = document.getElementById('checkoutForm');
+            const requiredFields = form.querySelectorAll('input[required], select[required]');
+            const filledFields = Array.from(requiredFields).filter(field => field.value.trim());
+            const progress = (filledFields.length / requiredFields.length) * 100;
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        // Monitorar mudanças nos campos
+        document.getElementById('checkoutForm').addEventListener('input', updateProgress);
+        document.getElementById('checkoutForm').addEventListener('change', updateProgress);
+
+        // Status do UTMify
+        function updateUTMifyStatus() {
+            const statusEl = document.getElementById('utmifyStatus');
+            const utmInfoEl = document.getElementById('utmInfo');
+            const utmDataEl = document.getElementById('utmData');
+            
+            if (window.UTMifyLeadTracker) {
+                const data = window.UTMifyLeadTracker.getCurrentData();
+                
+                statusEl.className = 'utmify-status active';
+                statusEl.innerHTML = '<strong>✅ UTMify Lead Tracker Ativo</strong><br>Session ID: ' + data.sessionId;
+                
+                // Mostrar dados UTM
+                utmInfoEl.style.display = 'block';
+                utmDataEl.innerHTML = '';
+                
+                Object.entries(data.utmData).forEach(([key, value]) => {
+                    if (value && key.startsWith('utm_')) {
+                        const item = document.createElement('div');
+                        item.className = 'utm-item';
+                        item.innerHTML = `<strong>${key}:</strong> ${value}`;
+                        utmDataEl.appendChild(item);
+                    }
+                });
+            } else {
+                statusEl.className = 'utmify-status inactive';
+                statusEl.innerHTML = '<strong>⚠️ UTMify Lead Tracker não detectado</strong>';
+            }
+        }
+
+        // Debug log
+        function addDebugLog(message) {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        // Listener para eventos do UTMify Lead Tracker
+        window.addEventListener('utmifyLeadCaptured', function(event) {
+            const data = event.detail;
+            addDebugLog(`Lead capturado: ${JSON.stringify(data.leadData)}`);
+        });
+
+        // Simulação de submit
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            addDebugLog('Formulário submetido!');
+            
+            // Simular processamento
+            const submitBtn = document.querySelector('.submit-btn');
+            submitBtn.innerHTML = '⏳ Processando...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('✅ Pedido finalizado com sucesso!\n\nDados capturados pelo UTMify Lead Tracker.');
+                submitBtn.innerHTML = '🚀 Finalizar Pedido';
+                submitBtn.disabled = false;
+            }, 2000);
+        });
+
+        // Inicializar
+        setTimeout(() => {
+            updateUTMifyStatus();
+            addDebugLog('Página carregada e UTMify Lead Tracker inicializado');
+        }, 1000);
+
+        // Atualizar status periodicamente
+        setInterval(updateUTMifyStatus, 5000);
+    </script>
+</body>
+</html>

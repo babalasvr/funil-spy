@@ -16,6 +16,9 @@
     <!-- Enhanced Analytics Tracking -->
     <script src="../analytics/public/enhanced-tracking.js"></script>
     
+    <!-- UTMify Pixel Integration -->
+    <script src="../analytics/public/utmify-pixel-integration.js"></script>
+    
     <!-- Checkout Back Button Redirect Script -->
     <script>
         // Back button redirect functionality for checkout
@@ -1421,9 +1424,34 @@
                         const response = await fetch(`${PAYMENT_API_URL}/payment-status/${currentTransaction.transaction_id}`);
                         const statusResult = await response.json();
                         
-                        if (statusResult.success && statusResult.data.status === 'paid') {
-                            clearInterval(statusCheckInterval);
-                            simulatePaymentConfirmed();
+                        console.log('Payment status check result:', statusResult);
+                        
+                        // Check if the request was successful
+                        if (statusResult.success) {
+                            // Extract payment status from the response
+                            let paymentStatus = '';
+                            
+                            // Handle different response structures
+                            if (statusResult.payment_status) {
+                                // New API returns payment_status directly
+                                paymentStatus = statusResult.payment_status;
+                            } else if (statusResult.data) {
+                                // Handle nested response structure from ExpfyPay API
+                                const paymentData = statusResult.data.data || statusResult.data;
+                                if (paymentData.status) {
+                                    paymentStatus = paymentData.status;
+                                }
+                            }
+                            
+                            console.log('Payment status:', paymentStatus);
+                            
+                            // Check if payment is paid
+                            if (paymentStatus === 'paid') {
+                                clearInterval(statusCheckInterval);
+                                simulatePaymentConfirmed();
+                            }
+                        } else {
+                            console.error('Payment status check failed:', statusResult.message);
                         }
                     } catch (error) {
                         console.error('Status check error:', error);
@@ -1456,7 +1484,7 @@
             showStatusMessage('🎉 Pagamento confirmado! Redirecionando para a página de acesso...', 'success');
             
             setTimeout(() => {
-                // Redirect to first upsell page instead of thank you page
+                // Redirect to first upsell presentation page
                 window.location.href = 'upsell1.html';
             }, 3000);
         }
@@ -1804,14 +1832,7 @@
         });
     </script>
 
-    <script>
-      window.pixelId = "66ac66dd43136b1d66bddb65";
-      var a = document.createElement("script");
-      a.setAttribute("async", "");
-      a.setAttribute("defer", "");
-      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-      document.head.appendChild(a);
-    </script>
+
 
 </body>
 </html>

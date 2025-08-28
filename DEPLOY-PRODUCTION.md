@@ -1,307 +1,316 @@
-# 🚀 Guia de Deploy para Produção - Sistema de Pagamento Real
+# 🚀 Deploy em Produção - Funil Spy
 
-## 📋 Pré-requisitos
+## 📋 Pré-requisitos na VPS
 
-1. **VPS/Servidor** com Node.js instalado
-2. **Chaves da ExpfyPay** (pública e secreta)
-3. **Domínio configurado** (ex: whatspy.pro)
-4. **Certificado SSL** (via Certbot)
-
-## 🔧 Passo 1: Configuração do Ambiente
-
-### 1.1 Clone o repositório na VPS
 ```bash
-cd /var/www
-sudo git clone https://github.com/babalasvr/funil-spy.git
-sudo chown -R $USER:$USER funil-spy
-cd funil-spy
-```
+# Atualizar sistema
+sudo apt update && sudo apt upgrade -y
 
-### 1.2 Configure as variáveis de ambiente
-```bash
-cd analytics
-cp .env.example .env
-nano .env
-```
+# Instalar Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
-**Adicione suas credenciais reais:**
-```env
-# Payment API Configuration
-PAYMENT_API_PORT=3002
-EXPFY_PUBLIC_KEY=pk_b9a9b1f0117e98cd3a01b3bed32c42436fc69fbe1fd55992
-EXPFY_SECRET_KEY=sk_b5cd83402109c8f2f449544aee17d00376298fefe2adfc54dfeb27d150cea5c0
-EXPFY_API_URL=https://api.expfypay.com/v1
+# Instalar Python 3
+sudo apt install python3 python3-pip -y
 
-# Pixel Tracking
-PIXEL_ID=66ac66dd43136b1d66bddb65
-UTM_TRACKING=true
-
-# Email Configuration
-EMAIL_USER=seu-email@gmail.com
-EMAIL_PASS=sua-senha-de-app-gmail
-EMAIL_FROM=noreply@whatspy.pro
-```
-
-## 🔧 Passo 2: Instalação dos Serviços
-
-### 2.1 Instalar dependências
-```bash
-# Analytics Service
-cd analytics
-npm install
-
-# Payment API
-cd ../api
-npm install
-```
-
-### 2.2 Configurar PM2
-```bash
 # Instalar PM2 globalmente
 sudo npm install -g pm2
 
-# Tornar o script executável
-chmod +x ../start-services.sh
+# Instalar Git
+sudo apt install git -y
 
-# Executar os serviços
-../start-services.sh
+# Instalar Nginx (opcional)
+sudo apt install nginx -y
 ```
 
-## 🔧 Passo 3: Configuração do Nginx
+## 🔧 1. Preparação Local
 
-### 3.1 Criar configuração do Nginx
+### Limpar repositório e commit final
 ```bash
-sudo nano /etc/nginx/sites-available/whatspy.pro
+# Verificar status
+git status
+
+# Adicionar arquivos importantes
+git add .
+git add -f analytics/routes/
+git add -f checkout/checkout-with-lead-tracker.html
+git add -f checkout/utmify-checkout-example.html
+git add -f checkout/utmify-official-example.html
+
+# Commit final
+git commit -m "🚀 Versão final para produção - Sistema completo"
+
+# Push para repositório
+git push origin main
 ```
 
-**Adicione a configuração:**
+## 🌐 2. Deploy na VPS
+
+### Primeira instalação
+```bash
+# Conectar na VPS
+ssh root@SEU_IP_VPS
+
+# Criar diretório do projeto
+sudo mkdir -p /var/www/funil-spy
+cd /var/www/funil-spy
+
+# Clonar repositório
+git clone https://github.com/SEU_USUARIO/funil-spy.git .
+
+# Configurar permissões
+sudo chown -R $USER:$USER /var/www/funil-spy
+chmod -R 755 /var/www/funil-spy
+```
+
+### Configuração de ambiente
+```bash
+# Copiar arquivo de ambiente
+cp .env.example .env
+
+# Editar configurações de produção
+nano .env
+```
+
+### Instalação de dependências
+```bash
+# Instalar todas as dependências
+npm run install-all
+
+# Ou manualmente:
+npm install
+cd analytics && npm install
+cd ../api && npm install
+cd ..
+```
+
+## 🔄 3. Atualizações Futuras
+
+### ⚠️ IMPORTANTE: Sincronização completa com exclusão de arquivos
+
+```bash
+# Na VPS - Método SEGURO para sincronizar tudo
+cd /var/www/funil-spy
+
+# 1. Fazer backup (opcional)
+cp -r . ../funil-spy-backup-$(date +%Y%m%d-%H%M%S)
+
+# 2. Parar serviços
+pm2 stop all
+
+# 3. Fazer fetch de todas as mudanças
+git fetch origin main
+
+# 4. RESET HARD - Remove arquivos deletados localmente
+git reset --hard origin/main
+
+# 5. Limpar arquivos não rastreados
+git clean -fd
+
+# 6. Reinstalar dependências (se package.json mudou)
+npm run install-all
+
+# 7. Reiniciar serviços
+pm2 restart all
+```
+
+### 🔄 Método alternativo (mais seguro)
+```bash
+# Clone fresh em novo diretório
+cd /var/www
+git clone https://github.com/SEU_USUARIO/funil-spy.git funil-spy-new
+
+# Copiar configurações
+cp funil-spy/.env funil-spy-new/.env
+
+# Instalar dependências
+cd funil-spy-new
+npm run install-all
+
+# Parar serviços antigos
+cd ../funil-spy
+pm2 stop all
+
+# Trocar diretórios
+cd ..
+mv funil-spy funil-spy-old
+mv funil-spy-new funil-spy
+
+# Iniciar serviços
+cd funil-spy
+pm2 start ecosystem.config.js --env production
+
+# Remover versão antiga (após confirmar que tudo funciona)
+rm -rf funil-spy-old
+```
+
+## 🚀 4. Inicialização dos Serviços
+
+### Usando PM2 (Recomendado)
+```bash
+# Iniciar todos os serviços
+pm2 start ecosystem.config.js --env production
+
+# Verificar status
+pm2 status
+
+# Ver logs
+pm2 logs
+
+# Salvar configuração PM2
+pm2 save
+pm2 startup
+```
+
+### Scripts disponíveis
+```bash
+# Instalar tudo
+npm run setup-production
+
+# Iniciar com PM2
+npm run pm2-start
+
+# Parar serviços
+npm run pm2-stop
+
+# Reiniciar serviços
+npm run pm2-restart
+
+# Ver logs
+npm run pm2-logs
+
+# Health check
+npm run health-check
+```
+
+## 🔧 5. Configuração Nginx (Opcional)
+
 ```nginx
+# /etc/nginx/sites-available/funil-spy
 server {
     listen 80;
-    server_name whatspy.pro www.whatspy.pro;
-    root /var/www/funil-spy;
-    index index.html;
+    server_name seudominio.com www.seudominio.com;
+    
+    # Redirecionar para HTTPS
+    return 301 https://$server_name$request_uri;
+}
 
-    # Main funnel pages
+server {
+    listen 443 ssl http2;
+    server_name seudominio.com www.seudominio.com;
+    
+    # Certificados SSL
+    ssl_certificate /path/to/certificate.crt;
+    ssl_certificate_key /path/to/private.key;
+    
+    # Arquivos estáticos
     location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Analytics API
-    location /api/analytics/ {
-        proxy_pass http://localhost:3001/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # Payment API
-    location /api/payment/ {
-        proxy_pass http://localhost:3002/;
-        proxy_http_version 1.1;
+        proxy_pass http://localhost:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-
-    # Admin dashboard
-    location /admin {
+    
+    # API Analytics
+    location /api/ {
         proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-### 3.2 Ativar o site
 ```bash
-sudo ln -s /etc/nginx/sites-available/whatspy.pro /etc/nginx/sites-enabled/
+# Ativar site
+sudo ln -s /etc/nginx/sites-available/funil-spy /etc/nginx/sites-enabled/
 sudo nginx -t
-sudo systemctl restart nginx
+sudo systemctl reload nginx
 ```
 
-## 🔧 Passo 4: Configuração do Firewall
+## 📊 6. Monitoramento
 
-### 4.1 Configurar UFW
 ```bash
+# Verificar serviços
+pm2 status
+
+# Logs em tempo real
+pm2 logs --lines 100
+
+# Monitoramento de recursos
+pm2 monit
+
+# Verificar portas
+sudo netstat -tlnp | grep :3001
+sudo netstat -tlnp | grep :8080
+```
+
+## 🔒 7. Segurança
+
+```bash
+# Firewall
 sudo ufw allow 22
 sudo ufw allow 80
 sudo ufw allow 443
-sudo ufw allow 3001
-sudo ufw allow 3002
-sudo ufw --force enable
+sudo ufw enable
+
+# Fail2ban (opcional)
+sudo apt install fail2ban -y
 ```
 
-### 4.2 Google Cloud Firewall (se usando GCP)
-```bash
-# Via CLI
-gcloud compute firewall-rules create allow-funil-services \
-    --allow tcp:80,tcp:443,tcp:3001,tcp:3002 \
-    --source-ranges 0.0.0.0/0 \
-    --target-tags funil-server
-
-# Ou via Console: VPC Network → Firewall
-```
-
-## 🔧 Passo 5: SSL com Certbot
+## ⚡ 8. Comandos Rápidos
 
 ```bash
-# Instalar Certbot
-sudo apt install -y certbot python3-certbot-nginx
+# Deploy completo (uma linha)
+git pull && npm run install-all && pm2 restart all
 
-# Obter certificado SSL
-sudo certbot --nginx -d whatspy.pro -d www.whatspy.pro
+# Reset completo
+git reset --hard origin/main && git clean -fd && npm run install-all && pm2 restart all
 
-# Testar renovação automática
-sudo certbot renew --dry-run
+# Backup rápido
+cp -r /var/www/funil-spy /var/www/backup-$(date +%Y%m%d-%H%M%S)
 ```
 
-## 🔧 Passo 6: Verificação dos Serviços
-
-### 6.1 Verificar status dos serviços
-```bash
-# Status do PM2
-pm2 status
-
-# Logs dos serviços
-pm2 logs
-
-# Status do Nginx
-sudo systemctl status nginx
-
-# Teste da API de pagamento
-curl -I http://localhost:3002/health
-
-# Teste do site
-curl -I https://whatspy.pro
-```
-
-### 6.2 Teste de pagamento
-1. Acesse: `https://whatspy.pro`
-2. Complete o funil até o checkout
-3. Preencha os dados e clique em "Gerar QR Code"
-4. Verifique se o QR Code é real (não demo)
-
-## 🔧 Passo 7: Monitoramento
-
-### 7.1 Configurar monitoramento básico
-```bash
-# Instalar htop para monitoramento
-sudo apt install htop
-
-# Configurar PM2 para boot
-pm2 startup
-pm2 save
-```
-
-### 7.2 Logs importantes
-```bash
-# Logs dos serviços
-pm2 logs payment-api
-pm2 logs analytics-service
-
-# Logs do Nginx
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-```
-
-## ⚠️ Configurações Importantes para Produção
-
-### 1. Atualizar URL da API de Pagamento
-No arquivo `checkout/index.html`, certifique-se de que:
-```javascript
-const PRODUCTION_MODE = true;
-const PAYMENT_API_URL = 'https://whatspy.pro/api/payment';
-```
-
-### 2. Configurar Webhook da ExpfyPay
-Na ExpfyPay, configure o webhook para:
-```
-https://whatspy.pro/api/payment/webhook
-```
-
-### 3. Configurar HTTPS redirect
-O Nginx com Certbot irá configurar automaticamente o redirect HTTP → HTTPS.
-
-## 🔄 Script de Atualização
-
-### 8.1 Criar script de deploy
-```bash
-nano deploy-production.sh
-```
+## 🆘 9. Troubleshooting
 
 ```bash
-#!/bin/bash
-echo "🚀 Deploying to production..."
+# Verificar logs de erro
+pm2 logs --err
 
-cd /var/www/funil-spy
+# Reiniciar serviço específico
+pm2 restart funil-spy-analytics
 
-# Pull latest changes
-git pull origin main
+# Verificar uso de memória
+pm2 monit
 
-# Update dependencies if needed
-cd analytics && npm install
-cd ../api && npm install
+# Limpar logs
+pm2 flush
 
-# Restart services
-pm2 restart all
-
-# Reload Nginx
-sudo systemctl reload nginx
-
-echo "✅ Production deployment completed!"
-echo "🌐 Site: https://whatspy.pro"
-echo "📊 Admin: https://whatspy.pro/admin"
+# Verificar processos
+ps aux | grep node
+ps aux | grep python
 ```
 
-```bash
-chmod +x deploy-production.sh
-```
+## ✅ 10. Checklist Final
 
-## 🎯 Checklist Final
+- [ ] VPS configurada com Node.js, Python, PM2
+- [ ] Repositório clonado em `/var/www/funil-spy`
+- [ ] Arquivo `.env` configurado
+- [ ] Dependências instaladas (`npm run install-all`)
+- [ ] Serviços iniciados (`pm2 start ecosystem.config.js --env production`)
+- [ ] Firewall configurado
+- [ ] Nginx configurado (se aplicável)
+- [ ] SSL configurado (se aplicável)
+- [ ] Monitoramento ativo (`pm2 monit`)
+- [ ] Backup configurado
 
-- [ ] ✅ Chaves da ExpfyPay configuradas
-- [ ] ✅ Serviços rodando (PM2 status)
-- [ ] ✅ Nginx configurado e SSL ativo
-- [ ] ✅ Firewall configurado
-- [ ] ✅ Teste de pagamento real funcionando
-- [ ] ✅ Webhook da ExpfyPay configurado
-- [ ] ✅ Monitoramento ativo
+---
 
-## 🆘 Troubleshooting
+**🎉 Projeto pronto para produção!**
 
-### Problema: QR Code ainda mostra "DEMO"
-**Solução:** Verifique se `PRODUCTION_MODE = true` no checkout/index.html
-
-### Problema: Erro 502 na API de pagamento
-**Solução:** 
-```bash
-pm2 restart payment-api
-pm2 logs payment-api
-```
-
-### Problema: Erro de conexão com ExpfyPay
-**Solução:** Verifique as chaves no .env e teste manualmente:
-```bash
-curl -X POST https://api.expfypay.com/v1/payments \
-  -H "X-Public-Key: sua_chave_publica" \
-  -H "X-Secret-Key: sua_chave_secreta" \
-  -H "Content-Type: application/json"
-```
-
-## 📞 Suporte
-
-Se encontrar problemas, verifique:
-1. Logs do PM2: `pm2 logs`
-2. Logs do Nginx: `sudo tail -f /var/log/nginx/error.log`
-3. Status dos serviços: `pm2 status`
-4. Conectividade com ExpfyPay API
+**URLs de acesso:**
+- Site principal: `http://SEU_IP:8080`
+- Analytics: `http://SEU_IP:3001`
+- Com Nginx: `https://seudominio.com`

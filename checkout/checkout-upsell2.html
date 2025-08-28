@@ -448,9 +448,34 @@
                         const response = await fetch(`${PAYMENT_API_URL}/payment-status/${currentTransaction.transaction_id}`);
                         const statusResult = await response.json();
                         
-                        if (statusResult.success && statusResult.data.status === 'paid') {
-                            clearInterval(statusCheckInterval);
-                            paymentConfirmed();
+                        console.log('Payment status check result:', statusResult);
+                        
+                        // Check if the request was successful
+                        if (statusResult.success) {
+                            // Extract payment status from the response
+                            let paymentStatus = '';
+                            
+                            // Handle different response structures
+                            if (statusResult.payment_status) {
+                                // New API returns payment_status directly
+                                paymentStatus = statusResult.payment_status;
+                            } else if (statusResult.data) {
+                                // Handle nested response structure from ExpfyPay API
+                                const paymentData = statusResult.data.data || statusResult.data;
+                                if (paymentData.status) {
+                                    paymentStatus = paymentData.status;
+                                }
+                            }
+                            
+                            console.log('Payment status:', paymentStatus);
+                            
+                            // Check if payment is paid
+                            if (paymentStatus === 'paid') {
+                                clearInterval(statusCheckInterval);
+                                paymentConfirmed();
+                            }
+                        } else {
+                            console.error('Payment status check failed:', statusResult.message);
                         }
                     } else {
                         // Em modo demonstração, confirmar após 10 segundos
@@ -483,7 +508,7 @@
             
             // Redirecionar para a página de obrigado após 3 segundos
             setTimeout(() => {
-                window.location.href = 'obrigado.html?purchase=recurso';
+                window.location.href = 'checkout-downsell.html';
             }, 3000);
         }
         
