@@ -143,9 +143,14 @@ class SecurityConfig {
                 return trustedIPs.includes(req.ip);
             },
             
-            // Handler customizado para quando limite é excedido
-            onLimitReached: (req, res, options) => {
+            // Log quando limite é excedido (removido onLimitReached depreciado)
+            handler: (req, res) => {
                 console.warn(`Rate limit exceeded for IP: ${req.ip}`);
+                res.status(429).json({
+                    error: 'Muitas requisições. Tente novamente em alguns minutos.',
+                    code: 'RATE_LIMIT_EXCEEDED',
+                    retryAfter: 60
+                });
             }
         });
     }

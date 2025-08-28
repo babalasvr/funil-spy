@@ -217,6 +217,51 @@ function Test-Application {
             }
         }
         
+        # Testar servidor local
+        Write-Log "Iniciando servidor de teste..."
+        $port = 3000
+        
+        # Verificar se a porta está em uso
+        $portInUse = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+        if ($portInUse) {
+            Write-Warning "Porta $port em uso. Tentando porta alternativa..."
+            $port = 3001
+        }
+        
+        # Iniciar servidor de teste em background
+        $env:PORT = $port
+        $testProcess = Start-Process -FilePath "node" -ArgumentList "server.js" -PassThru -NoNewWindow
+        
+        Start-Sleep -Seconds 3
+        
+        # Testar se o servidor está respondendo
+        try {
+            $response = Invoke-WebRequest -Uri "http://localhost:$port/health" -TimeoutSec 5 -ErrorAction Stop
+            Write-Host "✅ Teste local concluído com sucesso!" -ForegroundColor Green
+            Write-Host "Servidor rodando em: http://localhost:$port" -ForegroundColor Cyan
+            Write-Host "Pressione Ctrl+C para parar o servidor de teste" -ForegroundColor Yellow
+            
+            # Aguardar input do usuário
+            Read-Host "Pressione Enter para continuar com o deploy"
+            
+            # Parar servidor de teste
+            if ($testProcess -and !$testProcess.HasExited) {
+                $testProcess.Kill()
+                Write-Host "Servidor de teste parado" -ForegroundColor Yellow
+            }
+            
+            Write-Host ""
+            Write-Host "💡 Dica: Se houver conflito de porta no servidor, use:" -ForegroundColor Cyan
+            Write-Host "   Windows: .\fix-port-conflict.ps1" -ForegroundColor White
+            Write-Host "   Linux: ./fix-port-conflict.sh" -ForegroundColor White
+        }
+        catch {
+            Write-Warning "Servidor de teste não respondeu. Continuando com deploy..."
+            if ($testProcess -and !$testProcess.HasExited) {
+                $testProcess.Kill()
+            }
+        }
+        
         Pop-Location
     }
 }

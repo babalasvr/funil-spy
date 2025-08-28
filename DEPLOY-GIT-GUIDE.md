@@ -402,6 +402,39 @@ sudo netstat -tlnp | grep :3000
 cat analytics/.env
 ```
 
+### Erro: "Port already in use"
+
+#### No Windows:
+```powershell
+# Execute o script de resolução automática
+.\fix-port-conflict.ps1
+
+# Ou manualmente:
+# Encontrar processo usando a porta
+Get-NetTCPConnection -LocalPort 3001
+
+# Parar processo específico
+Stop-Process -Id <PID> -Force
+```
+
+#### No Linux/VPS:
+```bash
+# Execute o script de resolução automática
+./fix-port-conflict.sh
+
+# Ou manualmente:
+# Encontrar processo usando a porta
+sudo lsof -i :3001
+# ou
+sudo netstat -tulpn | grep :3001
+
+# Parar processo específico
+sudo kill -9 <PID>
+
+# Ou usar uma porta diferente
+export PORT=3002
+```
+
 ### Nginx não funciona
 ```bash
 # Verificar configuração
