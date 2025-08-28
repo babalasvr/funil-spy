@@ -11,7 +11,7 @@
     const UTMIFY_CONFIG = {
         pixelId: "66ac66dd43136b1d66bddb65",
         pixelUrl: "https://cdn.utmify.com.br/scripts/pixel/pixel.js",
-        debug: false
+        debug: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     };
     
     // Estado da integração
@@ -59,7 +59,16 @@
         }
         
         const script = document.createElement('script');
-        script.src = '/analytics/public/utmify-lead-tracker.js';
+        // Detectar se estamos em uma subpasta e ajustar o caminho
+        const isInSubfolder = window.location.pathname.includes('/checkout/') || 
+                             window.location.pathname.includes('/back-redirect/') ||
+                             window.location.pathname.includes('/numero/') ||
+                             window.location.pathname.includes('/carregando/') ||
+                             window.location.pathname.includes('/relatorio/');
+        
+        script.src = isInSubfolder ? '../analytics/public/utmify-lead-tracker.js' : './analytics/public/utmify-lead-tracker.js';
+        
+        log('🔄 Tentando carregar Lead Tracker de:', script.src);
         
         script.onload = function() {
             leadTrackerLoaded = true;
@@ -68,7 +77,7 @@
         };
         
         script.onerror = function() {
-            log('❌ Erro ao carregar Lead Tracker');
+            log('❌ Erro ao carregar Lead Tracker de:', script.src);
         };
         
         document.head.appendChild(script);
@@ -250,11 +259,6 @@
         // Carregar scripts
         loadUTMifyPixel();
         loadLeadTracker();
-        
-        // Configurar debug se estiver em desenvolvimento
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            UTMIFY_CONFIG.debug = true;
-        }
     }
     
     // Inicializar quando DOM estiver pronto

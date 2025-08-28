@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Pixel UTMify</title>
+    
+    <!-- UTMify Pixel Integration -->
+    <script src="./analytics/public/utmify-pixel-integration.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #128C7E;
+        }
+        #logs {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Teste de Integração UTMify Pixel</h1>
+        
+        <div id="status-container">
+            <div class="status info">⏳ Verificando integração...</div>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <h3>Testes Disponíveis:</h3>
+            <button onclick="testPageView()">📄 Page View</button>
+            <button onclick="testFormStart()">📝 Form Started</button>
+            <button onclick="testLeadCapture()">👤 Lead Captured</button>
+            <button onclick="testCustomEvent()">⚡ Custom Event</button>
+            <button onclick="clearLogs()">🗑️ Limpar Logs</button>
+        </div>
+        
+        <div id="logs"></div>
+    </div>
+    
+    <script>
+        let logContainer = document.getElementById('logs');
+        let statusContainer = document.getElementById('status-container');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#6c757d';
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateStatus(message, type) {
+            statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function clearLogs() {
+            logContainer.innerHTML = '';
+        }
+        
+        // Verificar se a integração está funcionando
+        function checkIntegration() {
+            addLog('🔍 Verificando integração UTMify...');
+            
+            // Verificar se o pixel foi carregado
+            if (window.pixelId) {
+                addLog(`✅ Pixel ID definido: ${window.pixelId}`, 'success');
+            } else {
+                addLog('❌ Pixel ID não encontrado', 'error');
+            }
+            
+            // Verificar se o UTMify está disponível
+            setTimeout(() => {
+                if (window.utmify) {
+                    addLog('✅ window.utmify disponível', 'success');
+                } else {
+                    addLog('❌ window.utmify não encontrado', 'error');
+                }
+                
+                // Verificar se o Lead Tracker está disponível
+                if (window.UTMifyLeadTracker) {
+                    addLog('✅ UTMifyLeadTracker disponível', 'success');
+                } else {
+                    addLog('❌ UTMifyLeadTracker não encontrado', 'error');
+                }
+                
+                // Verificar se a integração está pronta
+                if (window.UTMifyIntegration) {
+                    addLog('✅ UTMifyIntegration disponível', 'success');
+                    if (window.UTMifyIntegration.isReady()) {
+                        updateStatus('✅ Integração UTMify funcionando corretamente!', 'success');
+                        addLog('🚀 Integração totalmente funcional!', 'success');
+                    } else {
+                        updateStatus('⚠️ Integração carregada mas não está pronta', 'error');
+                        addLog('⚠️ Integração não está pronta', 'error');
+                    }
+                } else {
+                    updateStatus('❌ Integração UTMify não foi carregada', 'error');
+                    addLog('❌ UTMifyIntegration não encontrado', 'error');
+                }
+            }, 2000);
+        }
+        
+        // Testes de eventos
+        function testPageView() {
+            addLog('📄 Testando evento de page view...');
+            if (window.UTMifyIntegration) {
+                window.UTMifyIntegration.trackEvent('page_view', {
+                    page: 'test-page',
+                    source: 'manual-test'
+                });
+                addLog('✅ Evento page_view enviado', 'success');
+            } else {
+                addLog('❌ UTMifyIntegration não disponível', 'error');
+            }
+        }
+        
+        function testFormStart() {
+            addLog('📝 Testando evento de form started...');
+            if (window.UTMifyIntegration) {
+                window.UTMifyIntegration.trackEvent('form_started', {
+                    form_id: 'test-form',
+                    source: 'manual-test'
+                });
+                addLog('✅ Evento form_started enviado', 'success');
+            } else {
+                addLog('❌ UTMifyIntegration não disponível', 'error');
+            }
+        }
+        
+        function testLeadCapture() {
+            addLog('👤 Testando evento de lead captured...');
+            if (window.UTMifyIntegration) {
+                window.UTMifyIntegration.trackEvent('lead_captured', {
+                    email: 'test@example.com',
+                    source: 'manual-test'
+                });
+                addLog('✅ Evento lead_captured enviado', 'success');
+            } else {
+                addLog('❌ UTMifyIntegration não disponível', 'error');
+            }
+        }
+        
+        function testCustomEvent() {
+            addLog('⚡ Testando evento customizado...');
+            if (window.UTMifyIntegration) {
+                window.UTMifyIntegration.trackEvent('custom_test_event', {
+                    test_data: 'valor_teste',
+                    timestamp: Date.now(),
+                    source: 'manual-test'
+                });
+                addLog('✅ Evento customizado enviado', 'success');
+            } else {
+                addLog('❌ UTMifyIntegration não disponível', 'error');
+            }
+        }
+        
+        // Escutar evento de integração pronta
+        window.addEventListener('utmifyIntegrationReady', function(event) {
+            addLog('🎉 Evento utmifyIntegrationReady recebido!', 'success');
+            addLog(`📊 Detalhes: ${JSON.stringify(event.detail)}`);
+            updateStatus('✅ Integração UTMify funcionando corretamente!', 'success');
+        });
+        
+        // Inicializar verificação
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkIntegration, 1000);
+        });
+    </script>
+</body>
+</html>
