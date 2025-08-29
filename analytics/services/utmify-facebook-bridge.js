@@ -108,7 +108,13 @@ class UTMifyFacebookBridge {
                 success: true,
                 sessionId: sessionId,
                 utmData: utmData,
-                facebook: result
+                facebook: {
+                    success: result.conversionsAPI?.success || false,
+                    eventId: result.eventId,
+                    pixel: result.pixel,
+                    conversionsAPI: result.conversionsAPI,
+                    error: result.error
+                }
             };
             
         } catch (error) {
@@ -167,7 +173,13 @@ class UTMifyFacebookBridge {
                 sessionId: sessionId,
                 leadData: customerData,
                 utmData: utmData,
-                facebook: result
+                facebook: {
+                    success: result.conversionsAPI?.success || false,
+                    eventId: result.eventId,
+                    pixel: result.pixel,
+                    conversionsAPI: result.conversionsAPI,
+                    error: result.error
+                }
             };
             
         } catch (error) {
@@ -225,7 +237,13 @@ class UTMifyFacebookBridge {
                 sessionId: sessionId,
                 productData: productData,
                 utmData: utmData,
-                facebook: result
+                facebook: {
+                    success: result.conversionsAPI?.success || false,
+                    eventId: result.eventId,
+                    pixel: result.pixel,
+                    conversionsAPI: result.conversionsAPI,
+                    error: result.error
+                }
             };
             
         } catch (error) {
@@ -287,7 +305,13 @@ class UTMifyFacebookBridge {
                 sessionId: sessionId,
                 transactionData: transactionData,
                 utmData: utmData,
-                facebook: result
+                facebook: {
+                    success: result.conversionsAPI?.success || false,
+                    eventId: result.eventId,
+                    pixel: result.pixel,
+                    conversionsAPI: result.conversionsAPI,
+                    error: result.error
+                }
             };
             
         } catch (error) {
@@ -351,7 +375,13 @@ class UTMifyFacebookBridge {
                 sessionId: sessionId,
                 offerData: offerInfo,
                 utmData: utmData,
-                facebook: result
+                facebook: {
+                    success: result.conversionsAPI?.success || false,
+                    eventId: result.eventId,
+                    pixel: result.pixel,
+                    conversionsAPI: result.conversionsAPI,
+                    error: result.error
+                }
             };
             
         } catch (error) {
