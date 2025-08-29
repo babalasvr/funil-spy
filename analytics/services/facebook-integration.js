@@ -33,9 +33,10 @@ class FacebookIntegration {
             }
         });
         
-        console.log('🔧 Facebook Integration inicializado');
+        console.log('🔧 Facebook Integration inicializado (Server-Side Mode)');
         console.log(`📱 Pixel ID: ${this.pixelId}`);
         console.log(`🔑 Access Token: ${this.accessToken ? 'Configurado' : 'Não configurado'}`);
+        console.log(`🖥️ Modo: Server-Side Events (action_source: server)`);
         
         // Validar token na inicialização
         this.initializeAndValidate();
@@ -64,8 +65,30 @@ class FacebookIntegration {
     }
     
     /**
+     * Verifica se um IP é do lado do cliente (não adequado para server-side)
+     * IPs locais, privados ou de loopback não devem ser usados em server-side events
+     */
+    isClientSideIP(ip) {
+        if (!ip) return true;
+        
+        // IPs locais/privados que indicam client-side
+        const clientSidePatterns = [
+            /^127\./, // localhost
+            /^192\.168\./, // rede privada
+            /^10\./, // rede privada
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // rede privada
+            /^::1$/, // IPv6 localhost
+            /^fe80:/, // IPv6 link-local
+            /^fc00:/, // IPv6 unique local
+        ];
+        
+        return clientSidePatterns.some(pattern => pattern.test(ip));
+    }
+    
+    /**
      * Valida e formata parâmetro fbp (Facebook browser identifier)
-     * O fbp é obtido do cookie _fbp e deve ser enviado como está
+     * NOTA: fbp não deve ser usado em server-side events pois indica presença de cookie do navegador
+     * Esta função é mantida para compatibilidade mas não é usada em server-side
      */
     validateAndFormatFbp(fbp) {
         if (!fbp) return null;
@@ -87,7 +110,7 @@ class FacebookIntegration {
                 return null;
             }
             
-            console.log(`🔗 FBP validado: ${fbp}`);
+            console.log(`🔗 FBP validado (não usado em server-side): ${fbp}`);
             return fbp;
             
         } catch (error) {
@@ -97,9 +120,9 @@ class FacebookIntegration {
     }
     
     /**
-     * Formata parâmetro fbc (Facebook click identifier)
+     * Formata parâmetro fbc (Facebook click identifier) para server-side
      * Formato: fb.subdomainIndex.creationTime.fbclid
-     * CORREÇÃO: creationTime deve ser em segundos (Unix time)
+     * Server-side: creationTime deve ser em segundos (Unix time)
      */
     formatFbcParameter(fbclid, domain = null) {
         if (!fbclid) return null;
@@ -119,13 +142,13 @@ class FacebookIntegration {
                 }
             }
             
-            // CORREÇÃO: Timestamp atual em SEGUNDOS (Unix time) conforme exigido pelo Facebook
+            // Server-side: Timestamp atual em SEGUNDOS (Unix time)
             const creationTime = Math.floor(Date.now() / 1000);
             
             // Formato: fb.subdomainIndex.creationTime.fbclid
             const fbc = `fb.${subdomainIndex}.${creationTime}.${fbclid}`;
             
-            console.log(`🔗 FBC formatado corretamente: ${fbc} (timestamp: ${creationTime}s)`);
+            console.log(`🔗 FBC formatado para server-side: ${fbc} (timestamp: ${creationTime}s)`);
             return fbc;
             
         } catch (error) {
@@ -200,7 +223,7 @@ class FacebookIntegration {
     }
     
     /**
-     * Prepara dados do evento para Conversions API
+     * Prepara dados do evento para Conversions API (Server-Side)
      */
     prepareEventData(eventData) {
         const timestamp = Math.floor(Date.now() / 1000);
@@ -232,24 +255,31 @@ class FacebookIntegration {
             country: eventData.customerData?.country || 'BR'
         });
         
-        // Adicionar client_ip_address e client_user_agent se disponíveis
-        if (eventData.clientData?.ip) {
+        // Para server-side events, usar dados do servidor em vez de dados do navegador
+        // Adicionar IP do servidor ou proxy se disponível
+        if (eventData.serverData?.ip) {
+            userData.client_ip_address = eventData.serverData.ip;
+        } else if (eventData.clientData?.ip && !this.isClientSideIP(eventData.clientData.ip)) {
             userData.client_ip_address = eventData.clientData.ip;
         }
         
-        if (eventData.clientData?.userAgent) {
-            userData.client_user_agent = eventData.clientData.userAgent;
+        // Para server-side, usar user agent do servidor ou omitir
+        if (eventData.serverData?.userAgent) {
+            userData.client_user_agent = eventData.serverData.userAgent;
         }
         
-        // Adicionar fbc (Facebook click identifier) se disponível
+        // Adicionar fbc (Facebook click identifier) apenas se disponível e válido
+        // FBC é permitido em server-side quando há fbclid válido
         if (eventData.utmData?.fbclid) {
             userData.fbc = this.formatFbcParameter(eventData.utmData.fbclid, eventData.domain);
+            console.log(`🔗 FBC adicionado para server-side: ${userData.fbc}`);
         }
         
-        // Adicionar fbp (Facebook browser identifier) se disponível
-        if (eventData.clientData?.fbp) {
-            userData.fbp = this.validateAndFormatFbp(eventData.clientData.fbp);
-        }
+        // REMOVIDO: fbp não deve ser enviado em server-side events
+        // fbp indica presença de cookie do navegador, incompatível com server-side
+        // if (eventData.clientData?.fbp) {
+        //     userData.fbp = this.validateAndFormatFbp(eventData.clientData.fbp);
+        // }
         
         // Preparar dados customizados
         const customData = {
@@ -291,7 +321,7 @@ class FacebookIntegration {
             event_source_url: eventData.pageUrl,
             user_data: userData,
             custom_data: customData,
-            action_source: 'server_side'
+            action_source: 'server'
         };
     }
     
@@ -311,8 +341,9 @@ class FacebookIntegration {
                 test_event_code: this.testEventCode || undefined
             };
             
-            console.log(`📤 Enviando evento para Facebook: ${preparedEvent.event_name}`);
+            console.log(`📤 Enviando evento SERVER-SIDE para Facebook: ${preparedEvent.event_name}`);
             console.log(`🔍 Event ID: ${preparedEvent.event_id}`);
+            console.log(`🖥️ Action Source: ${preparedEvent.action_source}`);
             
             // Log detalhado para Purchase events
             if (preparedEvent.event_name === 'Purchase') {
@@ -338,12 +369,13 @@ class FacebookIntegration {
                     );
                     
                     if (response.data.events_received === 1) {
-                        console.log(`\n✅ === EVENTO ENVIADO COM SUCESSO ===`);
+                        console.log(`\n✅ === EVENTO SERVER-SIDE ENVIADO COM SUCESSO ===`);
                         console.log(`📝 Evento: ${preparedEvent.event_name}`);
                         console.log(`🆔 Event ID: ${preparedEvent.event_id}`);
                         console.log(`🔗 Facebook Trace ID: ${response.data.fbtrace_id}`);
                         console.log(`📊 Eventos recebidos: ${response.data.events_received}`);
                         console.log(`🔄 Tentativa: ${attempt}/${maxRetries}`);
+                        console.log(`🖥️ Modo: Server-Side (${preparedEvent.action_source})`);
                         
                         // Log específico para Purchase
                         if (preparedEvent.event_name === 'Purchase') {
