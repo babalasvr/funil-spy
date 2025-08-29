@@ -111,11 +111,13 @@ class UTMifyCheckoutIntegration {
      * Envia dados para Facebook Conversions API
      */
     async sendToFacebookCAPI(checkoutData, utmData, options = {}) {
+        let eventId;
         try {
             console.log('🚀 Iniciando envio para Facebook Conversions API...');
             
             // Preparar payload
-            const { payload, eventId, userData, utmParams } = this.prepareFacebookPayload(checkoutData, utmData, options);
+            const { payload, eventId: generatedEventId, userData, utmParams } = this.prepareFacebookPayload(checkoutData, utmData, options);
+            eventId = generatedEventId;
             
             console.log('📊 Dados do Checkout:', {
                 name: userData.name,
