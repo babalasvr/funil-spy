@@ -124,7 +124,7 @@ async function testFbcCorrection() {
         console.log('\n3️⃣ Enviando evento de teste para Facebook...');
         
         try {
-            const result = await facebook.sendToConversionsAPI(preparedEvent);
+            const result = await facebook.sendToConversionsAPI(eventData);
             
             if (result.success) {
                 console.log('\n✅ Evento enviado com sucesso!');
