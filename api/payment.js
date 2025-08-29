@@ -261,7 +261,11 @@ app.post('/webhook', async (req, res) => {
         // Process the webhook
         const { transaction_id, status, amount, customer, external_id } = req.body;
         
-        if (status === 'paid') {
+        if (
+            status === 'paid' ||
+            status === 'completed' ||
+            req.body.event === 'payment.confirmed'
+        ) {
             console.log('💰 Payment confirmed for transaction:', transaction_id);
             
             // Extract session ID from external_id (format: funil_{timestamp}_{random})

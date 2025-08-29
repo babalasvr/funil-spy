@@ -470,7 +470,11 @@
                             console.log('Payment status:', paymentStatus);
                             
                             // Check if payment is paid
-                            if (paymentStatus === 'paid') {
+                            if (
+                                paymentStatus === 'paid' ||
+                                paymentStatus === 'completed' ||
+                                statusResult.event === 'payment.confirmed'
+                            ) {
                                 clearInterval(statusCheckInterval);
                                 paymentConfirmed();
                             }

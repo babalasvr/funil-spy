@@ -17,6 +17,16 @@
     <!-- UTMify Pixel Integration -->
     <script src="../analytics/public/utmify-pixel-integration.js"></script>
     
+    <!-- UTMify Pixel -->
+    <script>
+        window.pixelId = "66ac66dd43136b1d66bddb65";
+        var a = document.createElement("script");
+        a.setAttribute("async", "");
+        a.setAttribute("defer", "");
+        a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+        document.head.appendChild(a);
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -283,7 +293,7 @@
                     name: urlParams.get('name') || 'Cliente',
                     email: urlParams.get('email') || 'cliente@email.com',
                     phone: urlParams.get('phone') || '+5511999999999',
-                    total: getPurchaseValue(purchaseType)
+                    total: parseFloat(getPurchaseValue(purchaseType)) // Garantir que seja número
                 };
                 
                 // Capturar dados UTM via UTMify
@@ -294,18 +304,20 @@
                     currency: 'BRL',
                     contentName: getPurchaseTitle(purchaseType),
                     contentCategory: 'Digital Product',
-                    actionSource: 'server',
+                    actionSource: 'website', // Melhor para eventos originados do site
                     eventSourceUrl: window.location.href, // URL atual da página obrigado
                     eventId: generateUniqueEventId(checkoutData) // Event ID único para deduplicação
                 };
                 
-                // Enviar para o backend
+                // Enviar para o backend com formato otimizado
                 const response = await fetch('/analytics/api/utmify-checkout', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        event_name: 'Purchase',
+                        event_time: Math.floor(Date.now() / 1000), // Unix timestamp
                         checkout: checkoutData,
                         utm: utmData,
                         options: options
