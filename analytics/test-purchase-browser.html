@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Manual - Evento Purchase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .col {
+            flex: 1;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Teste Manual - Evento Purchase</h1>
+        
+        <div class="info">
+            <strong>ℹ️ Instruções:</strong><br>
+            1. Preencha os dados abaixo<br>
+            2. Clique em "Enviar Evento Purchase"<br>
+            3. Verifique o resultado na tela<br>
+            4. Confirme no Facebook Events Manager
+        </div>
+
+        <form id="purchaseForm">
+            <h3>📧 Dados do Cliente</h3>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" value="teste@exemplo.com" required>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="phone">Telefone:</label>
+                        <input type="tel" id="phone" value="+5511999999999" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="firstName">Nome:</label>
+                        <input type="text" id="firstName" value="João" required>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="lastName">Sobrenome:</label>
+                        <input type="text" id="lastName" value="Silva" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="city">Cidade:</label>
+                        <input type="text" id="city" value="São Paulo">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="state">Estado:</label>
+                        <input type="text" id="state" value="SP">
+                    </div>
+                </div>
+            </div>
+
+            <h3>💰 Dados da Compra</h3>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="value">Valor (R$):</label>
+                        <input type="number" id="value" value="97.00" step="0.01" required>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="currency">Moeda:</label>
+                        <select id="currency">
+                            <option value="BRL">BRL - Real Brasileiro</option>
+                            <option value="USD">USD - Dólar Americano</option>
+                            <option value="EUR">EUR - Euro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="productName">Nome do Produto:</label>
+                <input type="text" id="productName" value="Descubra Zap - Curso Completo">
+            </div>
+
+            <h3>📊 Dados UTM (Opcional)</h3>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="utmSource">UTM Source:</label>
+                        <input type="text" id="utmSource" value="facebook">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="utmMedium">UTM Medium:</label>
+                        <input type="text" id="utmMedium" value="cpc">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="utmCampaign">UTM Campaign:</label>
+                        <input type="text" id="utmCampaign" value="descubra-zap-vendas">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="fbclid">FBCLID (Opcional):</label>
+                        <input type="text" id="fbclid" placeholder="IwAR1234567890abcdef">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">🚀 Enviar Evento Purchase</button>
+        </form>
+
+        <div id="result" class="result">
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('purchaseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const result = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Desabilitar botão e mostrar loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Enviando...';
+            result.style.display = 'block';
+            result.className = 'result';
+            resultContent.innerHTML = '<div class="loading">Enviando evento para o Facebook...</div>';
+            
+            try {
+                // Coletar dados do formulário
+                const purchaseData = {
+                    eventName: 'Purchase',
+                    userData: {
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        firstName: document.getElementById('firstName').value,
+                        lastName: document.getElementById('lastName').value,
+                        city: document.getElementById('city').value,
+                        state: document.getElementById('state').value,
+                        country: 'BR',
+                        zipCode: '01234-567'
+                    },
+                    customData: {
+                        currency: document.getElementById('currency').value,
+                        value: parseFloat(document.getElementById('value').value),
+                        content_type: 'product',
+                        content_ids: ['produto-descubra-zap'],
+                        content_name: document.getElementById('productName').value,
+                        num_items: 1
+                    },
+                    utmData: {
+                        utm_source: document.getElementById('utmSource').value,
+                        utm_medium: document.getElementById('utmMedium').value,
+                        utm_campaign: document.getElementById('utmCampaign').value,
+                        utm_content: 'teste-manual',
+                        utm_term: 'teste-purchase'
+                    }
+                };
+                
+                // Adicionar fbclid se fornecido
+                const fbclid = document.getElementById('fbclid').value;
+                if (fbclid) {
+                    purchaseData.fbclid = fbclid;
+                }
+                
+                console.log('Enviando dados:', purchaseData);
+                
+                // Enviar para o servidor
+                const response = await fetch('/api/track-purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(purchaseData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    resultContent.innerHTML = `
+                        <h4>✅ Evento Purchase enviado com sucesso!</h4>
+                        <p><strong>Event ID:</strong> ${data.eventId || 'N/A'}</p>
+                        <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Valor:</strong> ${purchaseData.customData.currency} ${purchaseData.customData.value}</p>
+                        <p><strong>Próximos passos:</strong></p>
+                        <ul>
+                            <li>Verifique no <a href="https://business.facebook.com/events_manager2/" target="_blank">Facebook Events Manager</a></li>
+                            <li>Procure pelo evento "Purchase" nos últimos minutos</li>
+                            <li>Confirme se todos os dados estão corretos</li>
+                        </ul>
+                        ${data.debug ? '<pre>' + JSON.stringify(data.debug, null, 2) + '</pre>' : ''}
+                    `;
+                } else {
+                    result.className = 'result error';
+                    resultContent.innerHTML = `
+                        <h4>❌ Erro ao enviar evento</h4>
+                        <p><strong>Erro:</strong> ${data.error || 'Erro desconhecido'}</p>
+                        <p><strong>Detalhes:</strong> ${data.details || 'Nenhum detalhe disponível'}</p>
+                        <p><strong>Sugestões:</strong></p>
+                        <ul>
+                            <li>Verifique se o serviço analytics está rodando</li>
+                            <li>Confirme as configurações do Facebook no .env</li>
+                            <li>Verifique os logs do servidor</li>
+                        </ul>
+                        ${data.debug ? '<pre>' + JSON.stringify(data.debug, null, 2) + '</pre>' : ''}
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                result.className = 'result error';
+                resultContent.innerHTML = `
+                    <h4>❌ Erro de conexão</h4>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                    <p><strong>Possíveis causas:</strong></p>
+                    <ul>
+                        <li>Servidor analytics não está rodando</li>
+                        <li>Problema de conectividade</li>
+                        <li>URL da API incorreta</li>
+                    </ul>
+                    <p><strong>Comando para verificar:</strong> <code>pm2 status</code></p>
+                `;
+            } finally {
+                // Reabilitar botão
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Enviar Evento Purchase';
+            }
+        });
+        
+        // Preencher fbclid da URL se disponível
+        const urlParams = new URLSearchParams(window.location.search);
+        const fbclidFromUrl = urlParams.get('fbclid');
+        if (fbclidFromUrl) {
+            document.getElementById('fbclid').value = fbclidFromUrl;
+        }
+        
+        // Preencher UTMs da URL se disponíveis
+        const utmSource = urlParams.get('utm_source');
+        const utmMedium = urlParams.get('utm_medium');
+        const utmCampaign = urlParams.get('utm_campaign');
+        
+        if (utmSource) document.getElementById('utmSource').value = utmSource;
+        if (utmMedium) document.getElementById('utmMedium').value = utmMedium;
+        if (utmCampaign) document.getElementById('utmCampaign').value = utmCampaign;
+    </script>
+</body>
+</html>
