@@ -272,6 +272,94 @@
             }, 1000);
         }
         
+        // Enviar evento Purchase para Facebook CAPI
+        async function sendPurchaseEvent() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const purchaseType = urlParams.get('purchase') || 'basic';
+                
+                // Dados do checkout (simulados - em produção viriam do processo de compra)
+                const checkoutData = {
+                    name: urlParams.get('name') || 'Cliente',
+                    email: urlParams.get('email') || 'cliente@email.com',
+                    phone: urlParams.get('phone') || '+5511999999999',
+                    total: getPurchaseValue(purchaseType)
+                };
+                
+                // Capturar dados UTM via UTMify
+                const utmData = window.utmify ? await window.utmify.getUTMData() : {};
+                
+                // Configurações do evento
+                const options = {
+                    currency: 'BRL',
+                    contentName: getPurchaseTitle(purchaseType),
+                    contentCategory: 'Digital Product',
+                    actionSource: 'server',
+                    eventSourceUrl: window.location.href, // URL atual da página obrigado
+                    eventId: generateUniqueEventId(checkoutData) // Event ID único para deduplicação
+                };
+                
+                // Enviar para o backend
+                const response = await fetch('/analytics/api/utmify-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        checkout: checkoutData,
+                        utm: utmData,
+                        options: options
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Evento Purchase enviado com sucesso:', result);
+                } else {
+                    console.error('❌ Erro ao enviar evento Purchase:', response.status);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro no envio do evento Purchase:', error);
+            }
+        }
+        
+        // Gerar Event ID único para deduplicação
+        function generateUniqueEventId(checkoutData) {
+            const timestamp = Date.now();
+            const userIdentifier = checkoutData.email || checkoutData.phone || 'anonymous';
+            const baseString = `Purchase_${userIdentifier}_${timestamp}`;
+            
+            // Simular hash MD5 (em produção usar crypto)
+            let hash = 0;
+            for (let i = 0; i < baseString.length; i++) {
+                const char = baseString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(16).substring(0, 16);
+        }
+        
+        // Obter valor da compra baseado no tipo
+        function getPurchaseValue(purchaseType) {
+            switch (purchaseType) {
+                case 'combo': return '497.00';
+                case 'recurso': return '297.00';
+                case 'mini': return '97.00';
+                default: return '197.00';
+            }
+        }
+        
+        // Obter título da compra baseado no tipo
+        function getPurchaseTitle(purchaseType) {
+            switch (purchaseType) {
+                case 'combo': return 'Kit Investigador Profissional';
+                case 'recurso': return 'Revelador de Mensagens Ocultas';
+                case 'mini': return 'Mini Pacote de Alertas';
+                default: return 'Acesso Básico';
+            }
+        }
+        
         // Preencher informações dinâmicas
         window.onload = function() {
             document.getElementById('orderNumber').textContent = generateOrderNumber();
@@ -282,6 +370,11 @@
             if (typeof window.trackConversion === 'function') {
                 window.trackConversion('purchase_complete');
             }
+            
+            // Enviar evento Purchase para Facebook CAPI
+            setTimeout(() => {
+                sendPurchaseEvent();
+            }, 2000); // Aguardar 2s para UTMify carregar
             
             // Configurar redirecionamento automático
             setupAutoRedirect();

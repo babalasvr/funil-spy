@@ -244,7 +244,9 @@
                     currency: 'BRL',
                     contentName: selectedOption.text.split(' - ')[0],
                     contentCategory: 'Curso Online',
-                    fbclid: fbclid
+                    fbclid: fbclid,
+                    eventSourceUrl: window.location.href, // URL atual da página
+                    eventId: generateUniqueEventId(checkoutData) // Event ID único para deduplicação
                 };
                 
                 try {
@@ -282,6 +284,22 @@
                 purchaseBtn.disabled = false;
                 purchaseBtn.textContent = '💳 Finalizar Compra';
             });
+            
+            // Gerar Event ID único para deduplicação
+            function generateUniqueEventId(checkoutData) {
+                const timestamp = Date.now();
+                const userIdentifier = checkoutData.email || checkoutData.phone || 'anonymous';
+                const baseString = `Purchase_${userIdentifier}_${timestamp}`;
+                
+                // Simular hash MD5 (em produção usar crypto)
+                let hash = 0;
+                for (let i = 0; i < baseString.length; i++) {
+                    const char = baseString.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash).toString(16).substring(0, 16);
+            }
             
             function showStatus(message, type) {
                 statusMessage.innerHTML = message;
