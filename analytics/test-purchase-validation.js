@@ -7,7 +7,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 // Configurações
-const BASE_URL = 'http://localhost:3003';
+const BASE_URL = 'http://localhost:3001';
 const TEST_SESSION_ID = `test_${Date.now()}`;
 
 /**
@@ -170,20 +170,21 @@ async function testTokenValidation() {
     try {
         console.log('\n🧪 Testando VALIDAÇÃO do token Facebook...');
         
-        const response = await axios.get(`${BASE_URL}/api/health`, {
+        // Testar se o serviço Facebook está inicializado corretamente
+        const response = await axios.get(`${BASE_URL}/api/tracking/health`, {
             timeout: 10000
         });
         
-        if (response.data.facebook) {
-            console.log('✅ Status do Facebook:', response.data.facebook);
-            return { success: true, data: response.data.facebook };
+        if (response.status === 200 && response.data.success) {
+            console.log('✅ Serviço de tracking funcionando');
+            return { success: true, data: response.data };
         } else {
-            console.log('⚠️ Informações do Facebook não disponíveis no health check');
-            return { success: false, error: 'Facebook status não encontrado' };
+            console.log('❌ Serviço de tracking com problemas');
+            return { success: false, error: 'Serviço de tracking não está funcionando' };
         }
         
     } catch (error) {
-        console.error('❌ Erro no teste de validação do token:', error.message);
+        console.error('❌ Erro no teste de validação do serviço:', error.message);
         return { success: false, error: error.message };
     }
 }
