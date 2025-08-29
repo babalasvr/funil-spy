@@ -61,6 +61,43 @@ class FacebookIntegration {
     }
     
     /**
+     * Formata parâmetro fbc (Facebook click identifier)
+     * Formato: fb.subdomainIndex.creationTime.fbclid
+     */
+    formatFbcParameter(fbclid, domain = null) {
+        if (!fbclid) return null;
+        
+        try {
+            // Determinar subdomain index
+            let subdomainIndex = 1; // default para example.com
+            
+            if (domain) {
+                const parts = domain.split('.');
+                if (parts.length === 2) {
+                    subdomainIndex = 1; // example.com
+                } else if (parts.length === 3) {
+                    subdomainIndex = 2; // www.example.com
+                } else {
+                    subdomainIndex = 0; // .com
+                }
+            }
+            
+            // Timestamp atual em milliseconds
+            const creationTime = Date.now();
+            
+            // Formato: fb.subdomainIndex.creationTime.fbclid
+            const fbc = `fb.${subdomainIndex}.${creationTime}.${fbclid}`;
+            
+            console.log(`🔗 FBC formatado: ${fbc}`);
+            return fbc;
+            
+        } catch (error) {
+            console.error('❌ Erro ao formatar FBC:', error.message);
+            return null;
+        }
+    }
+    
+    /**
      * Hash de dados sensíveis do cliente (SHA256)
      */
     hashCustomerData(data) {
@@ -157,6 +194,20 @@ class FacebookIntegration {
             zipCode: eventData.customerData?.zipCode,
             country: eventData.customerData?.country || 'BR'
         });
+        
+        // Adicionar client_ip_address e client_user_agent se disponíveis
+        if (eventData.clientData?.ip) {
+            userData.client_ip_address = eventData.clientData.ip;
+        }
+        
+        if (eventData.clientData?.userAgent) {
+            userData.client_user_agent = eventData.clientData.userAgent;
+        }
+        
+        // Adicionar fbc (Facebook click identifier) se disponível
+        if (eventData.utmData?.fbclid) {
+            userData.fbc = this.formatFbcParameter(eventData.utmData.fbclid, eventData.domain);
+        }
         
         // Preparar dados customizados
         const customData = {

@@ -36,8 +36,14 @@ function generateValidPurchaseData() {
         utmData: {
             source: 'facebook',
             medium: 'cpc',
-            campaign: 'teste_campaign'
-        }
+            campaign: 'teste_campaign',
+            fbclid: 'IwAR2F4-dbP0l7Mn1IawQQGCINEz7PYXQvwjNwB_qa2ofrHyiLjcbCRxTDMgk'
+        },
+        clientData: {
+            ip: '192.168.1.100',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        domain: 'exemplo.com'
     };
 }
 
@@ -164,6 +170,40 @@ async function testEventDeduplication() {
 }
 
 /**
+ * Testa se o parâmetro fbc está sendo enviado corretamente
+ */
+async function testFbcParameter() {
+    try {
+        console.log('\n🧪 Testando parâmetro FBC (Facebook click identifier)...');
+        
+        const purchaseData = generateValidPurchaseData();
+        console.log(`🔗 FBCLID no teste: ${purchaseData.utmData.fbclid}`);
+        
+        const response = await axios.post(`${BASE_URL}/api/tracking/purchase`, purchaseData, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 10000
+        });
+        
+        if (response.status === 200) {
+            console.log('✅ Evento com FBC processado com sucesso');
+            
+            // Verificar se o FBC foi formatado e enviado
+            if (response.data.facebook && response.data.facebook.conversionsAPI) {
+                console.log('✅ FBC incluído no evento para Facebook');
+                return { success: true, data: response.data };
+            } else {
+                console.log('⚠️ FBC pode não ter sido enviado corretamente');
+                return { success: false, error: 'FBC não encontrado na resposta' };
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro no teste de FBC:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Testa validação do token do Facebook
  */
 async function testTokenValidation() {
@@ -200,6 +240,7 @@ async function runAllTests() {
         validPurchase: await testValidPurchase(),
         invalidPurchase: await testInvalidPurchase(),
         deduplication: await testEventDeduplication(),
+        fbcParameter: await testFbcParameter(),
         tokenValidation: await testTokenValidation()
     };
     
