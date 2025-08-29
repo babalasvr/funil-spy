@@ -72,7 +72,28 @@
             utm_term: urlParams.get('utm_term'),
             utm_content: urlParams.get('utm_content'),
             src: urlParams.get('src'),
-            sck: urlParams.get('sck')
+            sck: urlParams.get('sck'),
+            fbclid: urlParams.get('fbclid')
+        };
+    }
+    
+    function getFacebookCookies() {
+        /**
+         * Captura cookies do Facebook (_fbp e _fbc)
+         * Conforme documentação oficial: https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/fbp-and-fbc/
+         */
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                return parts.pop().split(';').shift();
+            }
+            return null;
+        }
+        
+        return {
+            fbp: getCookie('_fbp'), // Facebook Browser ID
+            fbc: getCookie('_fbc')  // Facebook Click ID
         };
     }
 
@@ -95,6 +116,8 @@
         const pageInfo = getPageInfo();
         const utmParams = getUTMParams();
         
+        const facebookCookies = getFacebookCookies();
+        
         const eventData = {
             sessionId: getSessionId(),
             eventName,
@@ -107,7 +130,14 @@
             pageTitle: pageInfo.title,
             userAgent: pageInfo.userAgent,
             screenWidth: pageInfo.screenWidth,
-            screenHeight: pageInfo.screenHeight
+            screenHeight: pageInfo.screenHeight,
+            clientData: {
+                ip: null, // Será capturado no servidor
+                userAgent: pageInfo.userAgent,
+                fbp: facebookCookies.fbp,
+                fbc: facebookCookies.fbc
+            },
+            utmData: utmParams
         };
 
         try {

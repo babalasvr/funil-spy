@@ -15,6 +15,7 @@ const compression = require('compression');
 const leadCaptureRoutes = require('./routes/lead-capture');
 const utmifyIntegrationRoutes = require('./routes/utmify-integration');
 const trackingRoutes = require('./routes/tracking-routes');
+const utmifyCheckoutRoutes = require('./routes/utmify-checkout-api');
 const UTMifyFacebookBridge = require('./services/utmify-facebook-bridge');
 const FacebookIntegration = require('./services/facebook-integration');
 const SecurityConfig = require('./config/security-config');
@@ -86,6 +87,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Use lead capture routes
 app.use('/api', leadCaptureRoutes);
 app.use('/api', utmifyIntegrationRoutes);
+app.use('/api', utmifyCheckoutRoutes);
 
 // Usar rotas de tracking avançado
 app.use('/api/tracking', trackingRoutes(bridge, facebook, monitoring));

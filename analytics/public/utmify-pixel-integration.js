@@ -149,6 +149,26 @@
     }
     
     /**
+     * Captura cookies do Facebook (_fbp e _fbc)
+     * Conforme documentação oficial do Facebook
+     */
+    function getFacebookCookies() {
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                return parts.pop().split(';').shift();
+            }
+            return null;
+        }
+        
+        return {
+            fbp: getCookie('_fbp'), // Facebook Browser ID
+            fbc: getCookie('_fbc')  // Facebook Click ID
+        };
+    }
+    
+    /**
      * Sincroniza dados entre pixel e lead tracker
      */
     function syncData() {
@@ -156,23 +176,30 @@
             // Obter dados do lead tracker
             const leadData = window.UTMifyLeadTracker?.getCurrentData();
             
+            // Obter cookies do Facebook
+            const facebookCookies = getFacebookCookies();
+            
             if (leadData && window.utmify) {
                 // Enviar dados para o pixel UTMify
                 if (leadData.lead?.email) {
                     window.utmify.track('lead_email_captured', {
                         email: leadData.lead.email,
-                        source: 'lead_tracker'
+                        source: 'lead_tracker',
+                        fbp: facebookCookies.fbp,
+                        fbc: facebookCookies.fbc
                     });
                 }
                 
                 if (leadData.lead?.phone) {
                     window.utmify.track('lead_phone_captured', {
                         phone: leadData.lead.phone,
-                        source: 'lead_tracker'
+                        source: 'lead_tracker',
+                        fbp: facebookCookies.fbp,
+                        fbc: facebookCookies.fbc
                     });
                 }
                 
-                log('🔄 Dados sincronizados com pixel UTMify');
+                log('🔄 Dados sincronizados com pixel UTMify (incluindo cookies Facebook)');
             }
         } catch (error) {
             log('❌ Erro na sincronização:', error);

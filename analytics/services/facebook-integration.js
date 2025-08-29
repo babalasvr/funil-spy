@@ -64,8 +64,42 @@ class FacebookIntegration {
     }
     
     /**
+     * Valida e formata parâmetro fbp (Facebook browser identifier)
+     * O fbp é obtido do cookie _fbp e deve ser enviado como está
+     */
+    validateAndFormatFbp(fbp) {
+        if (!fbp) return null;
+        
+        try {
+            // Validar formato básico do fbp
+            // Formato esperado: fb.subdomainIndex.creationTime.randomValue
+            const fbpParts = fbp.split('.');
+            
+            if (fbpParts.length !== 4 || fbpParts[0] !== 'fb') {
+                console.warn('⚠️ Formato fbp inválido:', fbp);
+                return null;
+            }
+            
+            // Validar se o timestamp é válido (deve ter 10 ou 13 dígitos)
+            const timestamp = fbpParts[2];
+            if (!/^\d{10,13}$/.test(timestamp)) {
+                console.warn('⚠️ Timestamp fbp inválido:', timestamp);
+                return null;
+            }
+            
+            console.log(`🔗 FBP validado: ${fbp}`);
+            return fbp;
+            
+        } catch (error) {
+            console.error('❌ Erro ao validar FBP:', error.message);
+            return null;
+        }
+    }
+    
+    /**
      * Formata parâmetro fbc (Facebook click identifier)
      * Formato: fb.subdomainIndex.creationTime.fbclid
+     * CORREÇÃO: creationTime deve ser em segundos (Unix time)
      */
     formatFbcParameter(fbclid, domain = null) {
         if (!fbclid) return null;
@@ -85,13 +119,13 @@ class FacebookIntegration {
                 }
             }
             
-            // Timestamp atual em milliseconds
-            const creationTime = Date.now();
+            // CORREÇÃO: Timestamp atual em SEGUNDOS (Unix time) conforme exigido pelo Facebook
+            const creationTime = Math.floor(Date.now() / 1000);
             
             // Formato: fb.subdomainIndex.creationTime.fbclid
             const fbc = `fb.${subdomainIndex}.${creationTime}.${fbclid}`;
             
-            console.log(`🔗 FBC formatado: ${fbc}`);
+            console.log(`🔗 FBC formatado corretamente: ${fbc} (timestamp: ${creationTime}s)`);
             return fbc;
             
         } catch (error) {
@@ -212,6 +246,11 @@ class FacebookIntegration {
             userData.fbc = this.formatFbcParameter(eventData.utmData.fbclid, eventData.domain);
         }
         
+        // Adicionar fbp (Facebook browser identifier) se disponível
+        if (eventData.clientData?.fbp) {
+            userData.fbp = this.validateAndFormatFbp(eventData.clientData.fbp);
+        }
+        
         // Preparar dados customizados
         const customData = {
             currency: 'BRL',
@@ -277,12 +316,14 @@ class FacebookIntegration {
             
             // Log detalhado para Purchase events
             if (preparedEvent.event_name === 'Purchase') {
-                console.log(`💰 Purchase Details:`, {
-                    value: preparedEvent.custom_data.value,
-                    currency: preparedEvent.custom_data.currency,
-                    order_id: preparedEvent.custom_data.order_id,
-                    content_ids: preparedEvent.custom_data.content_ids
-                });
+                console.log('\n💰 === DETALHES DO EVENTO PURCHASE ===');
+                console.log(`🆔 Event ID: ${preparedEvent.event_id}`);
+                console.log(`🔗 FBC (Facebook Click ID): ${preparedEvent.user_data.fbc || 'Não disponível'}`);
+                console.log(`🧾 Transaction ID: ${preparedEvent.custom_data.order_id || 'Não informado'}`);
+                console.log(`💵 Valor: ${preparedEvent.custom_data.currency} ${preparedEvent.custom_data.value}`);
+                console.log(`📦 Produtos: ${JSON.stringify(preparedEvent.custom_data.content_ids || [])}`);
+                console.log(`👤 Dados do usuário: ${Object.keys(preparedEvent.user_data).filter(key => preparedEvent.user_data[key] && key !== 'fbc').join(', ')}`);
+                console.log('==========================================\n');
             }
             
             // Implementar retry automático
@@ -297,15 +338,31 @@ class FacebookIntegration {
                     );
                     
                     if (response.data.events_received === 1) {
-                        console.log(`✅ Evento enviado com sucesso: ${preparedEvent.event_name} (tentativa ${attempt})`);
+                        console.log(`\n✅ === EVENTO ENVIADO COM SUCESSO ===`);
+                        console.log(`📝 Evento: ${preparedEvent.event_name}`);
+                        console.log(`🆔 Event ID: ${preparedEvent.event_id}`);
                         console.log(`🔗 Facebook Trace ID: ${response.data.fbtrace_id}`);
+                        console.log(`📊 Eventos recebidos: ${response.data.events_received}`);
+                        console.log(`🔄 Tentativa: ${attempt}/${maxRetries}`);
+                        
+                        // Log específico para Purchase
+                        if (preparedEvent.event_name === 'Purchase') {
+                            console.log(`💰 Purchase processado com sucesso!`);
+                            console.log(`🧾 Transaction ID: ${preparedEvent.custom_data.order_id}`);
+                            console.log(`🔗 FBC enviado: ${preparedEvent.user_data.fbc ? 'Sim' : 'Não'}`);
+                        }
+                        
+                        console.log('=====================================\n');
                         
                         return {
                             success: true,
                             eventId: preparedEvent.event_id,
                             facebookEventId: response.data.fbtrace_id,
                             eventsReceived: response.data.events_received,
-                            attempt: attempt
+                            attempt: attempt,
+                            eventName: preparedEvent.event_name,
+                            transactionId: preparedEvent.custom_data.order_id,
+                            fbcSent: !!preparedEvent.user_data.fbc
                         };
                     } else {
                         throw new Error('Evento não foi recebido pelo Facebook');
@@ -452,16 +509,84 @@ class FacebookIntegration {
     }
     
     /**
-     * Valida token de acesso do Facebook
+     * Valida token de acesso do Facebook com verificações robustas
+     * CORREÇÃO: Melhor validação e tratamento de erros
      */
     async validateAccessToken() {
+        if (!this.accessToken) {
+            console.error('❌ FACEBOOK_ACCESS_TOKEN não configurado no arquivo .env');
+            console.error('📋 Configure a variável FACEBOOK_ACCESS_TOKEN com um System User Token válido do Business Manager');
+            return false;
+        }
+
         try {
+            console.log('🔍 Validando token do Facebook...');
+            
+            // Verificar se o token é válido e tem as permissões necessárias
             const response = await this.httpClient.get(
-                `https://graph.facebook.com/v18.0/me?access_token=${this.accessToken}`
+                `https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${this.accessToken}`
             );
-            return response.status === 200;
+            
+            if (response.status === 200 && response.data.id) {
+                console.log(`✅ Token válido - User ID: ${response.data.id}`);
+                
+                // Verificar se o token tem acesso ao pixel
+                try {
+                    const pixelResponse = await this.httpClient.get(
+                        `https://graph.facebook.com/v18.0/${this.pixelId}?fields=id,name&access_token=${this.accessToken}`
+                    );
+                    
+                    if (pixelResponse.status === 200) {
+                        console.log(`✅ Token tem acesso ao Pixel ID: ${this.pixelId}`);
+                        return true;
+                    }
+                } catch (pixelError) {
+                    console.error('❌ Token não tem acesso ao Pixel especificado');
+                    console.error('📋 Verifique se o System User Token está vinculado ao Pixel no Business Manager');
+                    return false;
+                }
+            }
+            
+            return false;
+            
         } catch (error) {
-            console.error('❌ Token de acesso inválido:', error.message);
+            console.error('❌ Erro na validação do token do Facebook:');
+            
+            if (error.response) {
+                const status = error.response.status;
+                const errorData = error.response.data;
+                
+                switch (status) {
+                    case 400:
+                        console.error('📋 Erro 400: Token malformado ou inválido');
+                        console.error('💡 Verifique se o FACEBOOK_ACCESS_TOKEN está correto');
+                        break;
+                    case 401:
+                        console.error('📋 Erro 401: Token não autorizado ou expirado');
+                        console.error('💡 Gere um novo System User Token no Business Manager');
+                        break;
+                    case 403:
+                        console.error('📋 Erro 403: Token sem permissões necessárias');
+                        console.error('💡 Verifique se o token tem permissões de ads_management');
+                        break;
+                    default:
+                        console.error(`📋 Erro ${status}: ${errorData?.error?.message || error.message}`);
+                }
+                
+                if (errorData?.error) {
+                    console.error('🔍 Detalhes do erro:', errorData.error);
+                }
+            } else {
+                console.error('📋 Erro de conexão:', error.message);
+            }
+            
+            console.error('\n📖 Como corrigir:');
+            console.error('1. Acesse https://business.facebook.com/');
+            console.error('2. Vá em Configurações > Usuários > Usuários do Sistema');
+            console.error('3. Gere um novo token com permissões ads_management');
+            console.error('4. Vincule o token ao Pixel no Business Manager');
+            console.error('5. Atualize a variável FACEBOOK_ACCESS_TOKEN no .env');
+            
             return false;
         }
     }
@@ -486,6 +611,73 @@ class FacebookIntegration {
         };
     }
     
+    /**
+     * Função específica para envio de eventos Purchase
+     * NOVA: Função otimizada com validações e logs específicos
+     */
+    async sendPurchaseEvent(purchaseData) {
+        console.log('\n🛒 === PROCESSANDO EVENTO PURCHASE ===');
+        
+        try {
+            // Validações específicas para Purchase
+            if (!purchaseData.transactionId) {
+                throw new Error('transactionId é obrigatório para eventos Purchase');
+            }
+            
+            if (!purchaseData.value || parseFloat(purchaseData.value) <= 0) {
+                throw new Error('value deve ser maior que 0 para eventos Purchase');
+            }
+            
+            if (!purchaseData.customerData || (!purchaseData.customerData.email && !purchaseData.customerData.phone)) {
+                throw new Error('email ou phone do cliente é obrigatório para eventos Purchase');
+            }
+            
+            // Preparar dados do evento
+            const eventData = {
+                ...purchaseData,
+                eventName: 'Purchase'
+            };
+            
+            console.log('✅ Validações do Purchase aprovadas');
+            console.log(`🧾 Transaction ID: ${purchaseData.transactionId}`);
+            console.log(`💵 Valor: ${purchaseData.value}`);
+            console.log(`📧 Email: ${purchaseData.customerData.email ? 'Presente' : 'Ausente'}`);
+            console.log(`📱 Telefone: ${purchaseData.customerData.phone ? 'Presente' : 'Ausente'}`);
+            console.log(`🔗 FBCLID: ${purchaseData.utmData?.fbclid ? 'Presente' : 'Ausente'}`);
+            
+            // Enviar evento
+            const result = await this.sendToConversionsAPI(eventData);
+            
+            if (result.success) {
+                console.log('\n🎉 === PURCHASE ENVIADO COM SUCESSO ===');
+                console.log(`🆔 Event ID: ${result.eventId}`);
+                console.log(`🔗 Facebook Trace ID: ${result.facebookEventId}`);
+                console.log(`🧾 Transaction ID: ${result.transactionId}`);
+                console.log(`📊 FBC enviado: ${result.fbcSent ? 'Sim' : 'Não'}`);
+                console.log('=========================================\n');
+            } else {
+                console.error('\n❌ === FALHA NO ENVIO DO PURCHASE ===');
+                console.error(`🚫 Erro: ${result.error}`);
+                console.error(`🧾 Transaction ID: ${purchaseData.transactionId}`);
+                console.error('====================================\n');
+            }
+            
+            return result;
+            
+        } catch (error) {
+            console.error('\n❌ === ERRO NO PROCESSAMENTO DO PURCHASE ===');
+            console.error(`🚫 Erro: ${error.message}`);
+            console.error(`🧾 Transaction ID: ${purchaseData.transactionId || 'Não informado'}`);
+            console.error('===========================================\n');
+            
+            return {
+                success: false,
+                error: error.message,
+                transactionId: purchaseData.transactionId
+            };
+        }
+    }
+
     /**
      * Testa conexão com Facebook
      */
