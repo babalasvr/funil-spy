@@ -53,7 +53,7 @@ class InitiateCheckoutVerifier {
             event_name: 'InitiateCheckout',
             event_time: Math.floor(Date.now() / 1000),
             event_id: `test_initiate_checkout_${Date.now()}`,
-            action_source: 'server',
+            action_source: 'website',
             user_data: {
                 em: ['7b17fb0bd173f625b58636fb796407c22b3d16fc78302d79f0fd30c2fc2fc068'], // test@example.com hashed
                 ph: ['a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'], // +5511999999999 hashed

@@ -60,6 +60,16 @@ class UTMifyCheckoutIntegration {
     }
 
     /**
+     * Gera event_id único baseado em timestamp e dados do usuário para deduplicação
+     */
+    generateUniqueEventId(userData, eventName = 'Purchase') {
+        const timestamp = Date.now();
+        const userIdentifier = userData.email || userData.phone || 'anonymous';
+        const baseString = `${eventName}_${userIdentifier}_${timestamp}`;
+        return crypto.createHash('md5').update(baseString).digest('hex').substring(0, 16);
+    }
+
+    /**
      * Prepara payload para Facebook Conversions API
      */
     prepareFacebookPayload(checkoutData, utmData, options = {}) {
@@ -68,7 +78,10 @@ class UTMifyCheckoutIntegration {
         const hashedUserData = this.hashUserData(userData);
         
         const eventTime = Math.floor(Date.now() / 1000); // Unix timestamp em segundos
-        const eventId = this.facebookIntegration.generateEventId();
+        const eventId = options.eventId || this.generateUniqueEventId(userData, 'Purchase');
+        
+        // event_source_url é obrigatório para rastreabilidade correta
+        const eventSourceUrl = options.eventSourceUrl || 'https://descubra-zap.top/checkout/obrigado.html';
 
         const payload = {
             data: [
@@ -76,6 +89,7 @@ class UTMifyCheckoutIntegration {
                     event_name: 'Purchase',
                     event_time: eventTime,
                     event_id: eventId,
+                    event_source_url: eventSourceUrl,
                     user_data: {
                         em: hashedUserData.em,
                         ph: hashedUserData.ph,
@@ -115,9 +129,12 @@ class UTMifyCheckoutIntegration {
         let eventId;
         try {
             console.log('🚀 Iniciando envio para Facebook Conversions API...');
-            
-            // Preparar payload
-            const { payload, eventId: generatedEventId, userData, utmParams } = this.prepareFacebookPayload(checkoutData, utmData, options);
+        
+        // Preparar payload
+        const { payload, eventId: generatedEventId, userData, utmParams } = this.prepareFacebookPayload(checkoutData, utmData, options);
+        
+        console.log('📍 Event Source URL:', payload.data[0].event_source_url);
+        console.log('🖥️ Action Source:', payload.data[0].action_source);
             eventId = generatedEventId;
             
             console.log('📊 Dados do Checkout:', {
@@ -129,6 +146,7 @@ class UTMifyCheckoutIntegration {
             
             console.log('🎯 Parâmetros UTM:', utmParams);
             console.log('🔑 Event ID:', eventId);
+            console.log('🌐 Event Source URL:', payload.data[0].event_source_url);
             
             if (payload.data[0].user_data.fbc) {
                 console.log('🔗 FBC Parameter:', payload.data[0].user_data.fbc);

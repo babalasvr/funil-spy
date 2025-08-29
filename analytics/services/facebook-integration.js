@@ -33,10 +33,10 @@ class FacebookIntegration {
             }
         });
         
-        console.log('🔧 Facebook Integration inicializado (Server-Side Mode)');
+        console.log('🔧 Facebook Integration inicializado (Website Mode)');
         console.log(`📱 Pixel ID: ${this.pixelId}`);
         console.log(`🔑 Access Token: ${this.accessToken ? 'Configurado' : 'Não configurado'}`);
-        console.log(`🖥️ Modo: Server-Side Events (action_source: server)`);
+        console.log(`🖥️ Modo: Website Events (action_source: website)`);
         
         // Validar token na inicialização
         this.initializeAndValidate();
@@ -272,11 +272,11 @@ class FacebookIntegration {
         // FBC é permitido em server-side quando há fbclid válido
         if (eventData.utmData?.fbclid) {
             userData.fbc = this.formatFbcParameter(eventData.utmData.fbclid, eventData.domain);
-            console.log(`🔗 FBC adicionado para server-side: ${userData.fbc}`);
+            console.log(`🔗 FBC adicionado para website-side: ${userData.fbc}`);
         }
         
-        // REMOVIDO: fbp não deve ser enviado em server-side events
-        // fbp indica presença de cookie do navegador, incompatível com server-side
+        // REMOVIDO: fbp não deve ser enviado em website events via servidor
+        // fbp indica presença de cookie do navegador, incompatível com eventos do servidor
         // if (eventData.clientData?.fbp) {
         //     userData.fbp = this.validateAndFormatFbp(eventData.clientData.fbp);
         // }
@@ -321,7 +321,7 @@ class FacebookIntegration {
             event_source_url: eventData.pageUrl,
             user_data: userData,
             custom_data: customData,
-            action_source: 'server'
+            action_source: 'website'
         };
     }
     
@@ -688,9 +688,9 @@ class FacebookIntegration {
                 throw new Error('Session ID é obrigatório para InitiateCheckout');
             }
             
-            // Log das configurações server-side
-            console.log('[FACEBOOK] Configurações server-side:', {
-                action_source: 'server',
+            // Log das configurações website-side
+            console.log('[FACEBOOK] Configurações website-side:', {
+                action_source: 'website',
                 has_fbc: !!eventData.fbc,
                 has_user_data: !!(convertedEventData.customerData.email || convertedEventData.customerData.phone),
                 has_custom_data: !!convertedEventData.customData.value,

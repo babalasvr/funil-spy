@@ -33,7 +33,8 @@ async function testUTMifyCheckoutIntegration() {
             currency: 'BRL',
             contentName: 'Produto Digital',
             contentCategory: 'Curso',
-            fbclid: 'IwAR1a2b3c4d5e6f7g8h9i0j' // Simulando parâmetro Facebook
+            fbclid: 'IwAR1a2b3c4d5e6f7g8h9i0j', // Simulando parâmetro Facebook
+            eventSourceUrl: 'https://descubra-zap.top/checkout/obrigado.html' // URL da página para action_source 'server'
         };
         
         console.log('📋 Dados de Entrada:');
