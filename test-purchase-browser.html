@@ -277,7 +277,7 @@
                 console.log('Enviando dados:', purchaseData);
                 
                 // Enviar para o servidor
-                const response = await fetch('/api/track-purchase', {
+                const response = await fetch('http://localhost:3001/api/track-purchase', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
