@@ -81,6 +81,115 @@ app.use((req, res, next) => {
     
     next();
 });
+
+// Middleware para detectar acesso à página checkout e disparar InitiateCheckout
+app.use((req, res, next) => {
+    // Detectar se a requisição é para a página checkout/index.html
+    if (req.url.includes('checkout/index.html') || req.url.includes('checkout') && req.method === 'GET') {
+        // Capturar dados da requisição
+        const sessionId = req.headers['x-session-id'] || req.cookies?.sessionId || generateSessionId();
+        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+        const referrer = req.headers.referer || req.headers.referrer;
+        
+        // Extrair dados do usuário dos headers ou query params
+        const userEmail = req.headers['x-user-email'] || req.query.email;
+        const userPhone = req.headers['x-user-phone'] || req.query.phone;
+        const userName = req.headers['x-user-name'] || req.query.name;
+        const checkoutValue = req.headers['x-checkout-value'] || req.query.value;
+        const productIds = req.headers['x-product-ids'] || req.query.product_ids;
+        const fbclid = req.query.fbclid;
+        
+        // Dados do evento InitiateCheckout
+        const eventData = {
+            event_name: 'InitiateCheckout',
+            session_id: sessionId,
+            page_url: req.url,
+            client_ip_address: clientIp,
+            client_user_agent: userAgent,
+            referrer: referrer,
+            timestamp: new Date().toISOString(),
+            // Dados do usuário
+            user_data: {
+                em: userEmail ? [userEmail] : undefined,
+                ph: userPhone ? [userPhone] : undefined,
+                fn: userName ? [userName.split(' ')[0]] : undefined,
+                ln: userName ? [userName.split(' ').slice(1).join(' ')] : undefined,
+                external_id: sessionId
+            },
+            // Dados customizados do checkout
+            custom_data: {
+                content_type: 'product',
+                currency: 'BRL',
+                value: checkoutValue ? parseFloat(checkoutValue) : undefined,
+                content_ids: productIds ? productIds.split(',') : undefined,
+                num_items: productIds ? productIds.split(',').length : 1
+            },
+            // Facebook Click ID se disponível
+            fbc: fbclid ? `fb.1.${Date.now()}.${fbclid}` : undefined
+        };
+        
+        // Processar evento através do bridge e facebook integration
+        setImmediate(async () => {
+            try {
+                console.log(`[CHECKOUT DETECTION] ===== EVENTO INITIATE CHECKOUT DETECTADO =====`);
+                console.log(`[CHECKOUT DETECTION] URL: ${req.url}`);
+                console.log(`[CHECKOUT DETECTION] Session ID: ${sessionId}`);
+                console.log(`[CHECKOUT DETECTION] IP Cliente: ${clientIp}`);
+                console.log(`[CHECKOUT DETECTION] User Agent: ${userAgent}`);
+                console.log(`[CHECKOUT DETECTION] Referrer: ${referrer}`);
+                
+                // Log dos dados do usuário coletados
+                console.log(`[CHECKOUT DETECTION] Dados do Usuário:`, {
+                    email: userEmail ? 'Presente' : 'Ausente',
+                    phone: userPhone ? 'Presente' : 'Ausente',
+                    name: userName ? 'Presente' : 'Ausente'
+                });
+                
+                // Log dos dados do checkout
+                console.log(`[CHECKOUT DETECTION] Dados do Checkout:`, {
+                    value: checkoutValue || 'Não informado',
+                    product_ids: productIds || 'Não informado',
+                    num_items: productIds ? productIds.split(',').length : 1,
+                    currency: 'BRL'
+                });
+                
+                // Log do Facebook Click ID
+                console.log(`[CHECKOUT DETECTION] Facebook Click ID (fbclid): ${fbclid ? 'Presente' : 'Ausente'}`);
+                if (fbclid) {
+                    console.log(`[CHECKOUT DETECTION] FBC gerado: fb.1.${Date.now()}.${fbclid}`);
+                }
+                
+                // Enviar para Facebook Conversions API usando função específica
+                await facebook.sendInitiateCheckoutEvent(eventData);
+                
+                // Registrar no monitoramento
+                monitoring.recordFacebookEvent('InitiateCheckout', {
+                    session_id: sessionId,
+                    page_url: req.url,
+                    success: true
+                });
+                
+                console.log(`[CHECKOUT DETECTION] ===== EVENTO INITIATE CHECKOUT ENVIADO COM SUCESSO =====`);
+                console.log(`[CHECKOUT DETECTION] Session ID: ${sessionId}`);
+                console.log(`[CHECKOUT DETECTION] Action Source: server`);
+                console.log(`[CHECKOUT DETECTION] Dados enviados para Facebook Conversions API`);
+                console.log(`[CHECKOUT DETECTION] Monitoramento registrado com sucesso`);
+                console.log(`[CHECKOUT DETECTION] ========================================================`);
+            } catch (error) {
+                console.error(`[CHECKOUT DETECTION] Erro ao processar evento InitiateCheckout:`, error);
+                monitoring.recordFacebookEvent('InitiateCheckout', {
+                    session_id: sessionId,
+                    page_url: req.url,
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+    }
+    
+    next();
+});
 // Serve static files for tracking scripts only
 app.use(express.static(path.join(__dirname, 'public')));
 

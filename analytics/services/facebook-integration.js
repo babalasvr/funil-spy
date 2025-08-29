@@ -644,6 +644,56 @@ class FacebookIntegration {
     }
     
     /**
+     * Função específica para envio de eventos InitiateCheckout
+     * NOVA: Função otimizada para server-side com action_source 'server'
+     */
+    async sendInitiateCheckoutEvent(eventData) {
+        try {
+            console.log('[FACEBOOK] Iniciando envio de evento InitiateCheckout server-side');
+            
+            // Garantir que é server-side com configurações corretas
+            const serverSideEventData = {
+                ...eventData,
+                eventName: 'InitiateCheckout'
+            };
+            
+            // Garantir que fbc está presente se fbclid foi fornecido
+            if (eventData.utmData?.fbclid) {
+                console.log('[FACEBOOK] Facebook Click ID (fbclid) incluído para conversão em fbc');
+            }
+            
+            // Validar dados essenciais
+            if (!serverSideEventData.sessionId) {
+                throw new Error('Session ID é obrigatório para InitiateCheckout');
+            }
+            
+            // Log das configurações server-side
+            console.log('[FACEBOOK] Configurações server-side:', {
+                action_source: 'server',
+                has_fbclid: !!eventData.utmData?.fbclid,
+                has_user_data: !!eventData.customerData,
+                has_custom_data: !!eventData.value
+            });
+            
+            // Processar evento
+            const result = await this.processEvent(serverSideEventData);
+            
+            console.log('[FACEBOOK] Evento InitiateCheckout server-side enviado com sucesso:', {
+                eventId: result.eventId,
+                sessionId: serverSideEventData.sessionId,
+                pageUrl: serverSideEventData.pageUrl,
+                has_user_data: !!eventData.customerData,
+                custom_data_value: eventData.value
+            });
+            
+            return result;
+        } catch (error) {
+            console.error('[FACEBOOK] Erro ao enviar evento InitiateCheckout:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Função específica para envio de eventos Purchase
      * NOVA: Função otimizada com validações e logs específicos
      */
