@@ -142,13 +142,14 @@ class FacebookIntegration {
                 }
             }
             
-            // Server-side: Timestamp atual em SEGUNDOS (Unix time)
-            const creationTime = Math.floor(Date.now() / 1000);
+            // Server-side: Timestamp atual em MILISSEGUNDOS (Unix time)
+            // CORREÇÃO: Facebook requer timestamp em milissegundos, não segundos
+            const creationTime = Date.now();
             
             // Formato: fb.subdomainIndex.creationTime.fbclid
             const fbc = `fb.${subdomainIndex}.${creationTime}.${fbclid}`;
             
-            console.log(`🔗 FBC formatado para server-side: ${fbc} (timestamp: ${creationTime}s)`);
+            console.log(`🔗 FBC formatado para server-side: ${fbc} (timestamp: ${creationTime}ms)`);
             return fbc;
             
         } catch (error) {
