@@ -8,21 +8,24 @@
  */
 
 module.exports = {
-    // Facebook Pixel ID (cliente)
-    PIXEL_ID: process.env.FACEBOOK_PIXEL_ID || '66ac66dd43136b1d66bddb65',
+    // Configurações básicas
+    PIXEL_ID: process.env.FACEBOOK_PIXEL_ID,
+    ACCESS_TOKEN: process.env.FACEBOOK_ACCESS_TOKEN,
+    TEST_EVENT_CODE: process.env.FACEBOOK_TEST_EVENT_CODE,
     
-    // Conversions API (servidor)
-    ACCESS_TOKEN: process.env.FACEBOOK_ACCESS_TOKEN || '',
-    
-    // Test Event Code (para testes)
-    TEST_EVENT_CODE: process.env.FACEBOOK_TEST_EVENT_CODE || '',
-    
-    // URLs da API do Facebook
+    // URLs da API
+    API_VERSION: 'v18.0',
     CONVERSIONS_API_URL: 'https://graph.facebook.com/v18.0',
     
-    // Configurações de retry e timeout
-    API_TIMEOUT: 5000,
+    // Configurações de retry e timeout (melhoradas)
     MAX_RETRIES: 3,
+    TIMEOUT: 15000, // 15 segundos (aumentado para maior confiabilidade)
+    RETRY_DELAY: 1000, // 1 segundo base
+    PROGRESSIVE_DELAY: true, // Delay progressivo (1s, 2s, 3s)
+    
+    // Configurações de validação
+    VALIDATE_TOKEN_ON_STARTUP: true,
+    STRICT_PURCHASE_VALIDATION: true,
     
     // Eventos padrão do Facebook
     STANDARD_EVENTS: {

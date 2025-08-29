@@ -29,6 +29,35 @@ class FacebookIntegration {
                 'User-Agent': 'FunilSpy-Facebook-Integration/1.0'
             }
         });
+        
+        console.log('🔧 Facebook Integration inicializado');
+        console.log(`📱 Pixel ID: ${this.pixelId}`);
+        console.log(`🔑 Access Token: ${this.accessToken ? 'Configurado' : 'Não configurado'}`);
+        
+        // Validar token na inicialização
+        this.initializeAndValidate();
+    }
+    
+    /**
+     * Inicializa e valida configurações
+     */
+    async initializeAndValidate() {
+        try {
+            const configValidation = this.validateConfig();
+            if (!configValidation.valid) {
+                console.error('❌ Configuração do Facebook inválida:', configValidation.errors);
+                return;
+            }
+            
+            const tokenValid = await this.validateAccessToken();
+            if (tokenValid) {
+                console.log('✅ Token de acesso do Facebook validado com sucesso');
+            } else {
+                console.error('❌ Token de acesso do Facebook inválido ou expirado');
+            }
+        } catch (error) {
+            console.error('❌ Erro na validação inicial do Facebook:', error.message);
+        }
     }
     
     /**
@@ -132,8 +161,14 @@ class FacebookIntegration {
         // Preparar dados customizados
         const customData = {
             currency: 'BRL',
-            value: parseFloat(eventData.value || 0)
+            value: parseFloat(eventData.value || 0),
+            content_type: 'product'
         };
+        
+        // Adicionar order_id se disponível (obrigatório para Purchase)
+        if (eventData.transactionId) {
+            customData.order_id = eventData.transactionId;
+        }
         
         // Adicionar dados específicos do produto
         if (eventData.productData) {
@@ -168,7 +203,7 @@ class FacebookIntegration {
     }
     
     /**
-     * Envia evento para Conversions API
+     * Envia evento para Conversions API com retry automático
      */
     async sendToConversionsAPI(eventData) {
         try {
@@ -186,22 +221,55 @@ class FacebookIntegration {
             console.log(`📤 Enviando evento para Facebook: ${preparedEvent.event_name}`);
             console.log(`🔍 Event ID: ${preparedEvent.event_id}`);
             
-            const response = await this.httpClient.post(
-                `${this.apiUrl}?access_token=${this.accessToken}`,
-                payload
-            );
-            
-            if (response.data.events_received === 1) {
-                console.log(`✅ Evento enviado com sucesso: ${preparedEvent.event_name}`);
-                return {
-                    success: true,
-                    eventId: preparedEvent.event_id,
-                    facebookEventId: response.data.fbtrace_id,
-                    eventsReceived: response.data.events_received
-                };
-            } else {
-                throw new Error('Evento não foi recebido pelo Facebook');
+            // Log detalhado para Purchase events
+            if (preparedEvent.event_name === 'Purchase') {
+                console.log(`💰 Purchase Details:`, {
+                    value: preparedEvent.custom_data.value,
+                    currency: preparedEvent.custom_data.currency,
+                    order_id: preparedEvent.custom_data.order_id,
+                    content_ids: preparedEvent.custom_data.content_ids
+                });
             }
+            
+            // Implementar retry automático
+            const maxRetries = config.MAX_RETRIES || 3;
+            let lastError;
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await this.httpClient.post(
+                        `${this.apiUrl}?access_token=${this.accessToken}`,
+                        payload
+                    );
+                    
+                    if (response.data.events_received === 1) {
+                        console.log(`✅ Evento enviado com sucesso: ${preparedEvent.event_name} (tentativa ${attempt})`);
+                        console.log(`🔗 Facebook Trace ID: ${response.data.fbtrace_id}`);
+                        
+                        return {
+                            success: true,
+                            eventId: preparedEvent.event_id,
+                            facebookEventId: response.data.fbtrace_id,
+                            eventsReceived: response.data.events_received,
+                            attempt: attempt
+                        };
+                    } else {
+                        throw new Error('Evento não foi recebido pelo Facebook');
+                    }
+                    
+                } catch (error) {
+                    lastError = error;
+                    
+                    if (attempt < maxRetries) {
+                        const delay = 1000 * attempt; // Delay progressivo
+                        console.log(`⚠️ Tentativa ${attempt} falhou, tentando novamente em ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+            
+            // Se chegou aqui, todas as tentativas falharam
+            throw lastError;
             
         } catch (error) {
             console.error('❌ Erro ao enviar evento para Facebook:', error.message);
@@ -244,6 +312,43 @@ class FacebookIntegration {
     }
     
     /**
+     * Valida parâmetros obrigatórios para evento Purchase
+     */
+    validatePurchaseEvent(eventData) {
+        const errors = [];
+        
+        // Parâmetros obrigatórios para Purchase
+        if (!eventData.eventName || eventData.eventName !== 'Purchase') {
+            errors.push('eventName deve ser "Purchase"');
+        }
+        
+        if (!eventData.value || parseFloat(eventData.value) <= 0) {
+            errors.push('value é obrigatório e deve ser maior que 0');
+        }
+        
+        if (!eventData.transactionId) {
+            errors.push('transactionId é obrigatório para eventos Purchase');
+        }
+        
+        // Validar dados do usuário (pelo menos um campo deve estar presente)
+        const hasUserData = eventData.customerData && (
+            eventData.customerData.email ||
+            eventData.customerData.phone ||
+            eventData.customerData.firstName ||
+            eventData.customerData.lastName
+        );
+        
+        if (!hasUserData) {
+            errors.push('Pelo menos um dado do usuário (email, phone, firstName, lastName) é obrigatório');
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors: errors
+        };
+    }
+    
+    /**
      * Processa evento completo (Pixel + Conversions API)
      */
     async processEvent(eventData) {
@@ -254,6 +359,22 @@ class FacebookIntegration {
         };
         
         try {
+            console.log(`🎯 Processando evento: ${eventData.eventName}`);
+            
+            // Validar dados básicos
+            if (!eventData.eventName) {
+                throw new Error('Nome do evento é obrigatório');
+            }
+            
+            // Validação específica para Purchase
+            if (eventData.eventName === 'Purchase') {
+                const purchaseValidation = this.validatePurchaseEvent(eventData);
+                if (!purchaseValidation.valid) {
+                    throw new Error(`Validação Purchase falhou: ${purchaseValidation.errors.join(', ')}`);
+                }
+                console.log('✅ Evento Purchase validado com sucesso');
+            }
+            
             // Gerar código para Pixel
             const pixelCode = this.generatePixelCode(eventData);
             if (pixelCode) {
@@ -273,6 +394,21 @@ class FacebookIntegration {
                 ...results,
                 error: error.message
             };
+        }
+    }
+    
+    /**
+     * Valida token de acesso do Facebook
+     */
+    async validateAccessToken() {
+        try {
+            const response = await this.httpClient.get(
+                `https://graph.facebook.com/v18.0/me?access_token=${this.accessToken}`
+            );
+            return response.status === 200;
+        } catch (error) {
+            console.error('❌ Token de acesso inválido:', error.message);
+            return false;
         }
     }
     
