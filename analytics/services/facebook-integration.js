@@ -291,7 +291,7 @@ class FacebookIntegration {
             event_source_url: eventData.pageUrl,
             user_data: userData,
             custom_data: customData,
-            action_source: 'website'
+            action_source: 'server_side'
         };
     }
     
