@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout com UTMify + Facebook CAPI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .checkout-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn-purchase {
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-purchase:hover {
+            background: #218838;
+        }
+        .btn-purchase:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .utm-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .status-message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <h1>🛒 Checkout com UTMify + Facebook CAPI</h1>
+        
+        <!-- Informações UTM capturadas -->
+        <div class="utm-info">
+            <h3>📊 Parâmetros UTM Detectados:</h3>
+            <div id="utm-display">Carregando parâmetros UTM...</div>
+        </div>
+        
+        <!-- Formulário de Checkout -->
+        <form id="checkout-form">
+            <div class="form-group">
+                <label for="name">Nome Completo:</label>
+                <input type="text" id="name" name="name" required placeholder="Seu nome completo">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required placeholder="seu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Telefone:</label>
+                <input type="tel" id="phone" name="phone" required placeholder="(11) 99999-9999">
+            </div>
+            
+            <div class="form-group">
+                <label for="product">Produto:</label>
+                <select id="product" name="product" required>
+                    <option value="">Selecione um produto</option>
+                    <option value="curso-basico" data-price="197.00">Curso Básico - R$ 197,00</option>
+                    <option value="curso-avancado" data-price="297.00">Curso Avançado - R$ 297,00</option>
+                    <option value="mentoria" data-price="497.00">Mentoria Completa - R$ 497,00</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="total">Valor Total:</label>
+                <input type="text" id="total" name="total" readonly placeholder="R$ 0,00">
+            </div>
+            
+            <button type="submit" class="btn-purchase" id="purchase-btn">
+                💳 Finalizar Compra
+            </button>
+        </form>
+        
+        <!-- Mensagens de Status -->
+        <div id="status-message" class="status-message"></div>
+    </div>
+
+    <script>
+        // Simulação do UTMify - captura parâmetros UTM da URL
+        class UTMifySimulator {
+            static getUTMParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return {
+                    source: urlParams.get('utm_source') || 'direct',
+                    medium: urlParams.get('utm_medium') || 'none',
+                    campaign: urlParams.get('utm_campaign') || 'organic',
+                    content: urlParams.get('utm_content') || '',
+                    term: urlParams.get('utm_term') || ''
+                };
+            }
+            
+            static getFbclid() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('fbclid') || null;
+            }
+        }
+        
+        // Classe para integração com Facebook CAPI
+        class CheckoutFacebookIntegration {
+            constructor() {
+                this.apiEndpoint = '/api/utmify-checkout'; // Endpoint do seu servidor
+            }
+            
+            async sendPurchaseEvent(checkoutData, utmData, options = {}) {
+                try {
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            checkout: checkoutData,
+                            utm: utmData,
+                            options: options
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    return result;
+                } catch (error) {
+                    console.error('Erro ao enviar evento Purchase:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+        }
+        
+        // Inicialização da página
+        document.addEventListener('DOMContentLoaded', function() {
+            const utmParams = UTMifySimulator.getUTMParameters();
+            const fbclid = UTMifySimulator.getFbclid();
+            const integration = new CheckoutFacebookIntegration();
+            
+            // Exibir parâmetros UTM
+            const utmDisplay = document.getElementById('utm-display');
+            utmDisplay.innerHTML = `
+                <strong>Source:</strong> ${utmParams.source}<br>
+                <strong>Medium:</strong> ${utmParams.medium}<br>
+                <strong>Campaign:</strong> ${utmParams.campaign}<br>
+                <strong>Content:</strong> ${utmParams.content || 'N/A'}<br>
+                <strong>Term:</strong> ${utmParams.term || 'N/A'}<br>
+                <strong>FBCLID:</strong> ${fbclid || 'N/A'}
+            `;
+            
+            // Atualizar preço quando produto for selecionado
+            const productSelect = document.getElementById('product');
+            const totalInput = document.getElementById('total');
+            
+            productSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                if (price) {
+                    totalInput.value = `R$ ${parseFloat(price).toFixed(2).replace('.', ',')}`;
+                } else {
+                    totalInput.value = 'R$ 0,00';
+                }
+            });
+            
+            // Processar formulário de checkout
+            const checkoutForm = document.getElementById('checkout-form');
+            const purchaseBtn = document.getElementById('purchase-btn');
+            const statusMessage = document.getElementById('status-message');
+            
+            checkoutForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Desabilitar botão e mostrar loading
+                purchaseBtn.disabled = true;
+                purchaseBtn.textContent = '⏳ Processando...';
+                
+                showStatus('Processando compra...', 'loading');
+                
+                // Coletar dados do formulário
+                const formData = new FormData(checkoutForm);
+                const selectedOption = productSelect.options[productSelect.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                
+                const checkoutData = {
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    total: price
+                };
+                
+                const options = {
+                    currency: 'BRL',
+                    contentName: selectedOption.text.split(' - ')[0],
+                    contentCategory: 'Curso Online',
+                    fbclid: fbclid
+                };
+                
+                try {
+                    // Enviar para Facebook CAPI via servidor
+                    const result = await integration.sendPurchaseEvent(checkoutData, utmParams, options);
+                    
+                    if (result.success) {
+                        showStatus(`
+                            ✅ Compra realizada com sucesso!<br>
+                            <strong>Event ID:</strong> ${result.eventId}<br>
+                            <strong>Facebook Trace ID:</strong> ${result.response?.fbtrace_id || 'N/A'}<br>
+                            <strong>Eventos Recebidos:</strong> ${result.response?.events_received || 'N/A'}
+                        `, 'success');
+                        
+                        // Limpar formulário
+                        checkoutForm.reset();
+                        totalInput.value = 'R$ 0,00';
+                        
+                    } else {
+                        showStatus(`
+                            ❌ Erro ao processar compra:<br>
+                            <strong>Erro:</strong> ${result.error}<br>
+                            <strong>Status:</strong> ${result.status || 'N/A'}
+                        `, 'error');
+                    }
+                    
+                } catch (error) {
+                    showStatus(`
+                        ❌ Erro de conexão:<br>
+                        <strong>Erro:</strong> ${error.message}
+                    `, 'error');
+                }
+                
+                // Reabilitar botão
+                purchaseBtn.disabled = false;
+                purchaseBtn.textContent = '💳 Finalizar Compra';
+            });
+            
+            function showStatus(message, type) {
+                statusMessage.innerHTML = message;
+                statusMessage.className = `status-message ${type}`;
+                statusMessage.style.display = 'block';
+                
+                // Auto-hide após 10 segundos para mensagens de sucesso
+                if (type === 'success') {
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 10000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
