@@ -118,13 +118,19 @@ async function testUTMifyCheckoutIntegration() {
                     em: '[HASH_EMAIL]',
                     ph: '[HASH_PHONE]',
                     fn: '[HASH_NAME]',
-                    fbc: payload.data[0].user_data.fbc || 'N/A'
+                    fbc: payload.data[0].user_data.fbc
                 },
                 custom_data: payload.data[0].custom_data,
                 action_source: payload.data[0].action_source
             }],
-            access_token: '[HIDDEN]'
+            access_token: '[HIDDEN]',
+            test_event_code: payload.test_event_code || 'NÃO INCLUÍDO'
         }, null, 2));
+        
+        console.log('\n🧪 TEST_EVENT_CODE Status:');
+        console.log(`   - Configurado no .env: ${process.env.FACEBOOK_TEST_EVENT_CODE || 'NÃO'}`);
+        console.log(`   - Incluído no payload: ${payload.test_event_code || 'NÃO'}`);
+        console.log(`   - FacebookIntegration.testEventCode: ${integration.facebookIntegration.testEventCode || 'NÃO'}`);
         
         console.log('\n✅ Teste concluído com sucesso!');
         

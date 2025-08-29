@@ -95,7 +95,8 @@ class UTMifyCheckoutIntegration {
                     action_source: 'website'
                 }
             ],
-            access_token: this.accessToken
+            access_token: this.accessToken,
+            test_event_code: this.facebookIntegration.testEventCode
         };
 
         // Adicionar fbc se disponível
