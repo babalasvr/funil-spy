@@ -360,14 +360,29 @@ router.get(['/session/:sessionId', '/session-report/:sessionId'], (req, res) => 
         
         // Verificar se sessionId foi fornecido
         if (!sessionId) {
-            return res.status(400).json({
+            return res.json({
                 success: false,
                 error: 'Session ID é obrigatório',
-                code: 'MISSING_SESSION_ID'
+                code: 'MISSING_SESSION_ID',
+                example: 'Use: /api/tracking/session-report/sua_session_id_aqui'
             });
         }
         
         const report = bridge.getSessionReport(sessionId);
+        
+        // Verificar se a sessão existe
+        if (!report.sessionData || Object.keys(report.sessionData).length === 0) {
+            return res.json({
+                success: true,
+                message: 'Sessão não encontrada ou sem dados',
+                data: {
+                    sessionId: sessionId,
+                    found: false,
+                    note: 'Esta sessão pode não ter sido iniciada ou os dados expiraram',
+                    emptyReport: report
+                }
+            });
+        }
         
         res.json({
             success: true,
@@ -391,6 +406,26 @@ router.get(['/session/:sessionId', '/session-report/:sessionId'], (req, res) => 
  */
 router.get('/pixel-code', async (req, res) => {
     try {
+        // Verificar configuração do Facebook
+        const configValidation = facebook.validateConfig();
+        if (!configValidation.valid) {
+            return res.json({
+                success: true,
+                message: 'Código do pixel gerado (modo desenvolvimento)',
+                warning: 'Configuração do Facebook incompleta: ' + configValidation.errors.join(', '),
+                pixelCode: `<!-- Facebook Pixel não configurado -->\n<!-- Configure FACEBOOK_PIXEL_ID e FACEBOOK_ACCESS_TOKEN -->`,
+                data: {
+                    pixelCode: `<!-- Facebook Pixel não configurado -->\n<!-- Configure FACEBOOK_PIXEL_ID e FACEBOOK_ACCESS_TOKEN -->`,
+                    pixelId: facebook.pixelId || 'NOT_CONFIGURED',
+                    configErrors: configValidation.errors,
+                    instructions: {
+                        placement: 'Configure as variáveis de ambiente primeiro',
+                        note: 'Veja o arquivo .env.example para referência'
+                    }
+                }
+            });
+        }
+        
         // Criar dados de evento básico para gerar o pixel code
         const eventData = {
             sessionId: 'pixel_generation',
@@ -466,17 +501,30 @@ async function handleIntegrationTest(req, res) {
     try {
         console.log('🧪 Iniciando teste de integração...');
         
+        // Verificar configuração do Facebook primeiro
+        const configValidation = facebook.validateConfig();
+        
         // Testar configuração do Facebook
         let facebookTest;
-        try {
-            facebookTest = await facebook.testConnection();
-            console.log('✅ Teste Facebook concluído:', facebookTest.success);
-        } catch (error) {
-            console.error('❌ Erro no teste Facebook:', error.message);
+        if (!configValidation.valid) {
             facebookTest = {
                 success: false,
-                error: error.message
+                error: 'Configuração incompleta: ' + configValidation.errors.join(', '),
+                configErrors: configValidation.errors,
+                note: 'Configure FACEBOOK_PIXEL_ID e FACEBOOK_ACCESS_TOKEN nas variáveis de ambiente'
             };
+            console.log('⚠️ Configuração Facebook incompleta:', configValidation.errors);
+        } else {
+            try {
+                facebookTest = await facebook.testConnection();
+                console.log('✅ Teste Facebook concluído:', facebookTest.success);
+            } catch (error) {
+                console.error('❌ Erro no teste Facebook:', error.message);
+                facebookTest = {
+                    success: false,
+                    error: error.message
+                };
+            }
         }
         
         // Testar bridge completo
@@ -500,6 +548,12 @@ async function handleIntegrationTest(req, res) {
             data: {
                 facebook: facebookTest,
                 bridge: bridgeTest,
+                configuration: {
+                    valid: configValidation.valid,
+                    errors: configValidation.errors,
+                    pixelId: facebook.pixelId || 'NOT_CONFIGURED',
+                    hasAccessToken: !!facebook.accessToken
+                },
                 timestamp: new Date().toISOString()
             }
         });

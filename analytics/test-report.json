@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-08-28T23:59:48.260Z",
+  "sessionId": "test_1756425377786_l2bzn7wfv",
+  "results": {
+    "passed": 0,
+    "failed": 10,
+    "tests": [
+      {
+        "name": "Health Check",
+        "success": false,
+        "error": "Servidor não está respondendo: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Monitoring Health",
+        "success": false,
+        "error": "Erro no endpoint de monitoramento: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Page View Tracking",
+        "success": false,
+        "error": "Erro no tracking de PageView: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Lead Capture",
+        "success": false,
+        "error": "Erro no lead capture: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Checkout Start",
+        "success": false,
+        "error": "Erro no checkout start: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Purchase Tracking",
+        "success": false,
+        "error": "Erro no purchase: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Pixel Code Generation",
+        "success": false,
+        "error": "Erro ao gerar pixel code: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Session Report",
+        "success": false,
+        "error": "Erro no session report: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Integration Test",
+        "success": false,
+        "error": "Erro no teste de integração: connect ETIMEDOUT 45.76.44.74:3003"
+      },
+      {
+        "name": "Metrics Collection",
+        "success": false,
+        "error": "Erro ao obter métricas: connect ETIMEDOUT 45.76.44.74:3003"
+      }
+    ]
+  },
+  "successRate": 0
+}

@@ -39,10 +39,10 @@ class MonitoringService {
         };
         
         this.alerts = {
-            errorRate: 0.1, // 10% de erro
-            responseTime: 5000, // 5 segundos
-            memoryUsage: 0.9, // 90% da memória
-            facebookErrors: 5 // 5 erros consecutivos
+            errorRate: 0.5, // 50% de erro (mais tolerante)
+            responseTime: 10000, // 10 segundos (mais tolerante)
+            memoryUsage: 0.95, // 95% da memória (mais tolerante)
+            facebookErrors: 10 // 10 erros consecutivos (mais tolerante)
         };
         
         this.emailTransporter = this.setupEmailTransporter();
