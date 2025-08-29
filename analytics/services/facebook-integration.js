@@ -7,6 +7,9 @@
  * @version 1.0.0 - Production Ready
  */
 
+// Carregar variáveis de ambiente
+require('dotenv').config();
+
 const axios = require('axios');
 const crypto = require('crypto');
 const config = require('../config/facebook-config');
