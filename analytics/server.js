@@ -193,6 +193,9 @@ app.use((req, res, next) => {
 // Serve static files for tracking scripts only
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve checkout files from parent directory
+app.use('/checkout', express.static(path.join(__dirname, '..', 'checkout')));
+
 // Use lead capture routes
 app.use('/api', leadCaptureRoutes);
 app.use('/api', utmifyIntegrationRoutes);

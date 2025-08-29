@@ -651,39 +651,63 @@ class FacebookIntegration {
         try {
             console.log('[FACEBOOK] Iniciando envio de evento InitiateCheckout server-side');
             
-            // Garantir que é server-side com configurações corretas
-            const serverSideEventData = {
-                ...eventData,
-                eventName: 'InitiateCheckout'
+            // Converter estrutura de dados do middleware para formato da API
+            const convertedEventData = {
+                sessionId: eventData.session_id,
+                eventName: 'InitiateCheckout',
+                pageUrl: eventData.page_url,
+                customerData: {
+                    email: eventData.user_data?.em?.[0],
+                    phone: eventData.user_data?.ph?.[0],
+                    firstName: eventData.user_data?.fn?.[0],
+                    lastName: eventData.user_data?.ln?.[0],
+                    externalId: eventData.user_data?.external_id
+                },
+                customData: {
+                    content_type: eventData.custom_data?.content_type,
+                    currency: eventData.custom_data?.currency,
+                    value: eventData.custom_data?.value,
+                    content_ids: eventData.custom_data?.content_ids,
+                    num_items: eventData.custom_data?.num_items
+                },
+                utmData: {
+                    fbclid: eventData.fbc ? eventData.fbc.split('.').pop() : undefined
+                },
+                clientIpAddress: eventData.client_ip_address,
+                clientUserAgent: eventData.client_user_agent,
+                referrer: eventData.referrer
             };
             
             // Garantir que fbc está presente se fbclid foi fornecido
-            if (eventData.utmData?.fbclid) {
-                console.log('[FACEBOOK] Facebook Click ID (fbclid) incluído para conversão em fbc');
+            if (eventData.fbc) {
+                console.log('[FACEBOOK] Facebook Click ID (fbc) incluído:', eventData.fbc);
             }
             
             // Validar dados essenciais
-            if (!serverSideEventData.sessionId) {
+            if (!convertedEventData.sessionId) {
                 throw new Error('Session ID é obrigatório para InitiateCheckout');
             }
             
             // Log das configurações server-side
             console.log('[FACEBOOK] Configurações server-side:', {
                 action_source: 'server',
-                has_fbclid: !!eventData.utmData?.fbclid,
-                has_user_data: !!eventData.customerData,
-                has_custom_data: !!eventData.value
+                has_fbc: !!eventData.fbc,
+                has_user_data: !!(convertedEventData.customerData.email || convertedEventData.customerData.phone),
+                has_custom_data: !!convertedEventData.customData.value,
+                session_id: convertedEventData.sessionId,
+                page_url: convertedEventData.pageUrl
             });
             
             // Processar evento
-            const result = await this.processEvent(serverSideEventData);
+            const result = await this.processEvent(convertedEventData);
             
             console.log('[FACEBOOK] Evento InitiateCheckout server-side enviado com sucesso:', {
                 eventId: result.eventId,
-                sessionId: serverSideEventData.sessionId,
-                pageUrl: serverSideEventData.pageUrl,
-                has_user_data: !!eventData.customerData,
-                custom_data_value: eventData.value
+                sessionId: convertedEventData.sessionId,
+                pageUrl: convertedEventData.pageUrl,
+                has_user_data: !!(convertedEventData.customerData.email || convertedEventData.customerData.phone),
+                custom_data_value: convertedEventData.customData.value,
+                fbc_sent: !!eventData.fbc
             });
             
             return result;
