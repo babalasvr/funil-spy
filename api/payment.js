@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-require('dotenv').config({ path: '/var/www/funil-spy/analytics/.env' });
+require('dotenv').config({ path: '../analytics/.env' });
 
 const app = express();
 const PORT = process.env.PAYMENT_API_PORT || 3002;
