@@ -738,7 +738,7 @@ app.post('/api/track-purchase', async (req, res) => {
         }
 
         // Enviar para o Facebook via FacebookIntegration
-        const facebookResult = await facebook.sendEvent(eventData);
+        const facebookResult = await facebook.processEvent(eventData);
         
         if (facebookResult.success) {
             // Registrar no monitoramento
