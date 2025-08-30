@@ -703,6 +703,7 @@ app.post('/api/track-purchase', async (req, res) => {
 
         // Preparar dados do evento para o Facebook
         const eventData = {
+            eventName: eventName || 'Purchase',
             event_name: eventName || 'Purchase',
             event_time: Math.floor(Date.now() / 1000),
             user_data: {
