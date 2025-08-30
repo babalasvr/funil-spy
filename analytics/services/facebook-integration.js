@@ -240,9 +240,23 @@ class FacebookIntegration {
             return null;
         }
         
-        // Mapear nome do evento
+        // Mapear nome do evento com validação rigorosa
+        if (!eventData.eventName || typeof eventData.eventName !== 'string' || eventData.eventName.trim() === '') {
+            console.error('❌ ERRO CRÍTICO: eventName é obrigatório e não pode estar vazio');
+            console.error('📋 Dados recebidos:', JSON.stringify(eventData, null, 2));
+            throw new Error('eventName é obrigatório e deve ser uma string não vazia');
+        }
+        
         const facebookEventName = config.CUSTOM_EVENT_MAPPING[eventData.eventName] || 
                                  eventData.eventName;
+        
+        // Validação adicional do nome do evento mapeado
+        if (!facebookEventName || typeof facebookEventName !== 'string' || facebookEventName.trim() === '') {
+            console.error('❌ ERRO CRÍTICO: Nome do evento mapeado é inválido');
+            console.error('📋 EventName original:', eventData.eventName);
+            console.error('📋 EventName mapeado:', facebookEventName);
+            throw new Error('Nome do evento mapeado é inválido');
+        }
         
         // Preparar dados do usuário
         const userData = this.hashCustomerData({
@@ -336,6 +350,15 @@ class FacebookIntegration {
             if (!preparedEvent) {
                 return { success: true, message: 'Evento duplicado ignorado' };
             }
+            
+            // Validação final do event_name no payload preparado
+            if (!preparedEvent.event_name || typeof preparedEvent.event_name !== 'string' || preparedEvent.event_name.trim() === '') {
+                console.error('❌ ERRO CRÍTICO: event_name ausente no payload final!');
+                console.error('📋 Payload preparado:', JSON.stringify(preparedEvent, null, 2));
+                throw new Error('event_name é obrigatório no payload final para o Facebook');
+            }
+            
+            console.log(`✅ Payload validado com event_name: "${preparedEvent.event_name}"`);
             
             const payload = {
                 data: [preparedEvent],
@@ -505,9 +528,25 @@ class FacebookIntegration {
         try {
             console.log(`🎯 Processando evento: ${eventData.eventName}`);
             
-            // Validar dados básicos
-            if (!eventData.eventName) {
-                throw new Error('Nome do evento é obrigatório');
+            // Validar dados básicos com verificação rigorosa
+            if (!eventData.eventName || typeof eventData.eventName !== 'string' || eventData.eventName.trim() === '') {
+                console.error('❌ ERRO CRÍTICO na validação inicial: eventName inválido');
+                console.error('📋 Tipo do eventName:', typeof eventData.eventName);
+                console.error('📋 Valor do eventName:', eventData.eventName);
+                console.error('📋 Dados completos do evento:', JSON.stringify(eventData, null, 2));
+                throw new Error('Nome do evento é obrigatório e deve ser uma string não vazia');
+            }
+            
+            console.log(`✅ EventName validado: "${eventData.eventName}" (tipo: ${typeof eventData.eventName})`);
+            
+            // Verificar se o evento existe no mapeamento ou é um evento padrão
+            const mappedEventName = config.CUSTOM_EVENT_MAPPING[eventData.eventName] || eventData.eventName;
+            const standardEvents = Object.values(config.STANDARD_EVENTS);
+            
+            if (!standardEvents.includes(mappedEventName) && !config.CUSTOM_EVENT_MAPPING[eventData.eventName]) {
+                console.warn(`⚠️ AVISO: Evento "${eventData.eventName}" não é um evento padrão do Facebook e não está no mapeamento customizado`);
+                console.warn('📋 Eventos padrão disponíveis:', standardEvents.join(', '));
+                console.warn('📋 Eventos customizados mapeados:', Object.keys(config.CUSTOM_EVENT_MAPPING).join(', '));
             }
             
             // Validação específica para Purchase

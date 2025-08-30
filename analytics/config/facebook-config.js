@@ -42,13 +42,33 @@ module.exports = {
     // Mapeamento de eventos customizados
     CUSTOM_EVENT_MAPPING: {
         'page_view': 'PageView',
+        'PageView': 'PageView',
         'view_content': 'ViewContent',
+        'ViewContent': 'ViewContent',
         'lead_captured': 'Lead',
+        'Lead': 'Lead',
         'checkout_started': 'InitiateCheckout',
+        'InitiateCheckout': 'InitiateCheckout',
         'payment_info_added': 'AddPaymentInfo',
+        'AddPaymentInfo': 'AddPaymentInfo',
         'purchase_completed': 'Purchase',
+        'Purchase': 'Purchase',
         'upsell_view': 'ViewContent',
-        'downsell_view': 'ViewContent'
+        'downsell_view': 'ViewContent',
+        'AddToCart': 'AddToCart',
+        'add_to_cart': 'AddToCart',
+        'CompleteRegistration': 'CompleteRegistration',
+        'complete_registration': 'CompleteRegistration',
+        // Eventos específicos do funil
+        'funnel_step_1': 'ViewContent',
+        'funnel_step_2': 'ViewContent',
+        'funnel_step_3': 'InitiateCheckout',
+        'order_bump_view': 'ViewContent',
+        'order_bump_add': 'AddToCart',
+        'upsell_1_view': 'ViewContent',
+        'upsell_2_view': 'ViewContent',
+        'downsell_1_view': 'ViewContent',
+        'thank_you_page': 'Purchase'
     },
     
     // Configurações de deduplicação
