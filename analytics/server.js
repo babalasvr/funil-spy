@@ -451,6 +451,9 @@ app.post('/api/register-sale', (req, res) => {
         special_offer
     } = req.body;
 
+    // Generate transaction_id if not provided
+    const finalTransactionId = transaction_id || `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Insert sale record
     const stmt = db.prepare(`INSERT INTO sales (
         transaction_id, session_id, customer_name, customer_email, customer_document,
@@ -458,7 +461,7 @@ app.post('/api/register-sale', (req, res) => {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
     stmt.run([
-        transaction_id,
+        finalTransactionId,
         session_id,
         customer_data?.name || '',
         customer_data?.email || '',
