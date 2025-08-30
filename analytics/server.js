@@ -688,6 +688,111 @@ app.post('/api/store-utm', (req, res) => {
     });
 });
 
+// Track purchase event and send to Facebook
+app.post('/api/track-purchase', async (req, res) => {
+    try {
+        const { eventName, userData, customData, utmData } = req.body;
+        
+        // Validar dados obrigatórios
+        if (!eventName || !userData || !customData) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields: eventName, userData, customData' 
+            });
+        }
+
+        // Preparar dados do evento para o Facebook
+        const eventData = {
+            event_name: eventName || 'Purchase',
+            event_time: Math.floor(Date.now() / 1000),
+            user_data: {
+                em: userData.email ? [userData.email.toLowerCase()] : undefined,
+                ph: userData.phone ? [userData.phone.replace(/\D/g, '')] : undefined,
+                fn: userData.firstName ? [userData.firstName.toLowerCase()] : undefined,
+                ln: userData.lastName ? [userData.lastName.toLowerCase()] : undefined,
+                ct: userData.city ? [userData.city.toLowerCase()] : undefined,
+                st: userData.state ? [userData.state.toLowerCase()] : undefined,
+                country: userData.country ? [userData.country.toLowerCase()] : undefined,
+                zp: userData.zipCode ? [userData.zipCode.replace(/\D/g, '')] : undefined
+            },
+            custom_data: {
+                currency: customData.currency || 'BRL',
+                value: parseFloat(customData.value) || 0,
+                content_type: customData.content_type || 'product',
+                content_ids: customData.content_ids || [],
+                content_name: customData.content_name || '',
+                num_items: parseInt(customData.num_items) || 1
+            }
+        };
+
+        // Adicionar dados UTM se disponíveis
+        if (utmData) {
+            eventData.custom_data = {
+                ...eventData.custom_data,
+                utm_source: utmData.utm_source,
+                utm_medium: utmData.utm_medium,
+                utm_campaign: utmData.utm_campaign,
+                utm_content: utmData.utm_content,
+                utm_term: utmData.utm_term
+            };
+        }
+
+        // Enviar para o Facebook via FacebookIntegration
+        const facebookResult = await facebook.sendEvent(eventData);
+        
+        if (facebookResult.success) {
+            // Registrar no monitoramento
+            monitoring.recordFacebookEvent('purchase', true);
+            
+            // Salvar no banco de dados para auditoria
+            const timestamp = formatSaoPauloDate();
+            db.run(`INSERT INTO utm_sessions (session_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term, 
+                    page_url, page_title, device_type, created_at, updated_at, transaction_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    crypto.randomUUID(),
+                    utmData?.utm_source || 'direct',
+                    utmData?.utm_medium || 'none',
+                    utmData?.utm_campaign || 'none',
+                    utmData?.utm_content || 'none',
+                    utmData?.utm_term || 'none',
+                    '/checkout/purchase',
+                    'Purchase Event',
+                    'unknown',
+                    timestamp,
+                    timestamp,
+                    `purchase_${Date.now()}`
+                ], (err) => {
+                    if (err) {
+                        console.error('Error saving purchase event to database:', err);
+                    }
+                });
+            
+            res.json({ 
+                success: true, 
+                message: 'Purchase event sent to Facebook successfully',
+                facebook_response: facebookResult
+            });
+        } else {
+            monitoring.recordFacebookEvent('purchase', false);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Failed to send event to Facebook',
+                details: facebookResult.error
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error in /api/track-purchase:', error);
+        monitoring.recordFacebookEvent('purchase', false);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+});
+
 // Get UTM data by session_id or transaction_id
 app.get('/api/get-utm/:identifier', (req, res) => {
     const identifier = req.params.identifier;
