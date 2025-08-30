@@ -334,9 +334,18 @@ app.post('/webhook', async (req, res) => {
             req.body.event === 'payment.confirmed'
         ) {
             console.log('💰 Payment confirmed for transaction:', transaction_id);
+            console.log('📊 Payment details:', {
+                transaction_id,
+                external_id,
+                amount,
+                customer: customer ? `${customer.name} (${customer.email})` : 'N/A',
+                status
+            });
             
-            // Extract session ID from external_id (format: funil_{timestamp}_{random})
-            const sessionId = external_id.split('_')[1] + '_' + external_id.split('_')[2];
+            // Use transaction_id as session_id for analytics tracking
+            // This ensures each payment has a unique session identifier
+            const sessionId = transaction_id || external_id || `session_${Date.now()}`;
+            console.log('🔗 Using session_id for analytics:', sessionId);
             
             // Register sale in analytics system
             try {
@@ -353,7 +362,23 @@ app.post('/webhook', async (req, res) => {
                 
                 console.log('✅ Sale registered in analytics:', analyticsResponse.data);
             } catch (analyticsError) {
-                console.error('❌ Failed to register sale in analytics:', analyticsError.message);
+                console.error('❌ Failed to register sale in analytics:', {
+                    error: analyticsError.message,
+                    status: analyticsError.response?.status,
+                    data: analyticsError.response?.data,
+                    session_id: sessionId,
+                    transaction_id
+                });
+                
+                // Log the payload that failed
+                console.error('📋 Failed payload:', {
+                    transaction_id,
+                    session_id: sessionId,
+                    customer_data: customer,
+                    amount: parseFloat(amount),
+                    order_bump: req.body.order_bump || false,
+                    special_offer: req.body.special_offer || false
+                });
             }
         }
         
