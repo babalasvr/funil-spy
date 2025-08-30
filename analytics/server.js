@@ -753,7 +753,8 @@ app.post('/api/track-purchase', async (req, res) => {
         // Enviar para o Facebook via FacebookIntegration
         const facebookResult = await facebook.processEvent(eventData);
         
-        if (facebookResult.success) {
+        // Verificar se houve erro no processamento
+        if (!facebookResult.error && (facebookResult.conversionsAPI || facebookResult.pixel)) {
             // Registrar no monitoramento
             monitoring.recordFacebookEvent('purchase', true);
             
@@ -791,7 +792,7 @@ app.post('/api/track-purchase', async (req, res) => {
             res.status(500).json({ 
                 success: false, 
                 error: 'Failed to send event to Facebook',
-                details: facebookResult.error
+                details: facebookResult.error || 'Unknown Facebook integration error'
             });
         }
         
