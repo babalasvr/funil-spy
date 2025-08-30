@@ -451,6 +451,21 @@ app.post('/api/register-sale', (req, res) => {
         special_offer
     } = req.body;
 
+    // Validate required fields
+    if (!session_id) {
+        return res.status(400).json({ 
+            error: 'session_id is required',
+            code: 'MISSING_SESSION_ID'
+        });
+    }
+
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ 
+            error: 'amount is required and must be greater than 0',
+            code: 'INVALID_AMOUNT'
+        });
+    }
+
     // Generate transaction_id if not provided
     const finalTransactionId = transaction_id || `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
