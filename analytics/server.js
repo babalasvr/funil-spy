@@ -706,6 +706,18 @@ app.post('/api/track-purchase', async (req, res) => {
             eventName: eventName || 'Purchase',
             event_name: eventName || 'Purchase',
             event_time: Math.floor(Date.now() / 1000),
+            value: parseFloat(customData.value) || 0,
+            transactionId: customData.transactionId || `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            customerData: {
+                email: userData.email,
+                phone: userData.phone,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                city: userData.city,
+                state: userData.state,
+                country: userData.country,
+                zipCode: userData.zipCode
+            },
             user_data: {
                 em: userData.email ? [userData.email.toLowerCase()] : undefined,
                 ph: userData.phone ? [userData.phone.replace(/\D/g, '')] : undefined,
