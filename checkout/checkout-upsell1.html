@@ -316,7 +316,7 @@
                     localStorage.setItem('sessionId', sessionId);
                 }
                 
-                // Obter parâmetros UTM da URL
+                // Obter parâmetros UTM da URL e localStorage
                 const urlParams = new URLSearchParams(window.location.search);
                 const utmData = {
                     utm_source: urlParams.get('utm_source') || localStorage.getItem('utm_source') || 'direct',
@@ -324,9 +324,45 @@
                     utm_campaign: urlParams.get('utm_campaign') || localStorage.getItem('utm_campaign') || 'upsell_combo',
                     utm_term: urlParams.get('utm_term') || localStorage.getItem('utm_term') || '',
                     utm_content: urlParams.get('utm_content') || localStorage.getItem('utm_content') || '',
+                    utm_id: urlParams.get('utm_id') || localStorage.getItem('utm_id') || '',
+                    fbclid: urlParams.get('fbclid') || localStorage.getItem('fbclid') || '',
+                    gclid: urlParams.get('gclid') || localStorage.getItem('gclid') || '',
+                    msclkid: urlParams.get('msclkid') || localStorage.getItem('msclkid') || '',
                     src: urlParams.get('src') || localStorage.getItem('src') || '',
                     sck: urlParams.get('sck') || localStorage.getItem('sck') || ''
                 };
+
+                // Armazenar dados UTM no analytics para uso posterior no webhook
+                try {
+                    await fetch('http://localhost:3001/api/store-utm', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            utm_source: utmData.utm_source,
+                            utm_medium: utmData.utm_medium,
+                            utm_campaign: utmData.utm_campaign,
+                            utm_term: utmData.utm_term,
+                            utm_content: utmData.utm_content,
+                            utm_id: utmData.utm_id,
+                            fbclid: utmData.fbclid,
+                            gclid: utmData.gclid,
+                            msclkid: utmData.msclkid,
+                            referrer: document.referrer || 'direct',
+                            landing_page: window.location.href,
+                            customer_email: customerData.email,
+                            customer_phone: customerData.phone,
+                            customer_name: customerData.name,
+                            ip_address: null, // Será capturado no servidor
+                            user_agent: navigator.userAgent
+                        })
+                    });
+                    console.log('✅ Dados UTM armazenados para sessão:', sessionId);
+                } catch (utmError) {
+                    console.warn('⚠️ Falha ao armazenar dados UTM:', utmError);
+                }
                 
                 // Dados do pagamento
                 const paymentData = {

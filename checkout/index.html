@@ -1254,17 +1254,53 @@
                     localStorage.setItem('sessionId', sessionId);
                 }
 
-                // Get UTM parameters from URL
+                // Get UTM parameters from URL and localStorage
                 const urlParams = new URLSearchParams(window.location.search);
                 const utmData = {
-                    utm_source: urlParams.get('utm_source') || 'whatsapp_spy',
-                    utm_medium: urlParams.get('utm_medium') || 'funil',
-                    utm_campaign: urlParams.get('utm_campaign') || 'conversao_premium',
-                    utm_term: urlParams.get('utm_term') || 'monitoramento',
-                    utm_content: urlParams.get('utm_content') || 'checkout',
-                    src: urlParams.get('src') || '',
-                    sck: urlParams.get('sck') || ''
+                    utm_source: urlParams.get('utm_source') || localStorage.getItem('utm_source') || 'whatsapp_spy',
+                    utm_medium: urlParams.get('utm_medium') || localStorage.getItem('utm_medium') || 'funil',
+                    utm_campaign: urlParams.get('utm_campaign') || localStorage.getItem('utm_campaign') || 'conversao_premium',
+                    utm_term: urlParams.get('utm_term') || localStorage.getItem('utm_term') || 'monitoramento',
+                    utm_content: urlParams.get('utm_content') || localStorage.getItem('utm_content') || 'checkout',
+                    utm_id: urlParams.get('utm_id') || localStorage.getItem('utm_id') || '',
+                    fbclid: urlParams.get('fbclid') || localStorage.getItem('fbclid') || '',
+                    gclid: urlParams.get('gclid') || localStorage.getItem('gclid') || '',
+                    msclkid: urlParams.get('msclkid') || localStorage.getItem('msclkid') || '',
+                    src: urlParams.get('src') || localStorage.getItem('src') || '',
+                    sck: urlParams.get('sck') || localStorage.getItem('sck') || ''
                 };
+
+                // Store UTM data in analytics for later use in webhook
+                try {
+                    await fetch('http://localhost:3001/api/store-utm', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            utm_source: utmData.utm_source,
+                            utm_medium: utmData.utm_medium,
+                            utm_campaign: utmData.utm_campaign,
+                            utm_term: utmData.utm_term,
+                            utm_content: utmData.utm_content,
+                            utm_id: utmData.utm_id,
+                            fbclid: utmData.fbclid,
+                            gclid: utmData.gclid,
+                            msclkid: utmData.msclkid,
+                            referrer: document.referrer || 'direct',
+                            landing_page: window.location.href,
+                            customer_email: formData.email,
+                            customer_phone: formData.phone,
+                            customer_name: formData.name,
+                            ip_address: null, // Will be captured server-side
+                            user_agent: navigator.userAgent
+                        })
+                    });
+                    console.log('✅ UTM data stored for session:', sessionId);
+                } catch (utmError) {
+                    console.warn('⚠️ Failed to store UTM data:', utmError);
+                }
 
                 const paymentData = {
                     amount: totalPrice,

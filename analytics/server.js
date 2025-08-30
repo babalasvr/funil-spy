@@ -637,6 +637,77 @@ app.get('/api/session', (req, res) => {
     res.json({ sessionId: generateSessionId() });
 });
 
+// Store UTM data for session/transaction
+app.post('/api/store-utm', (req, res) => {
+    const {
+        session_id,
+        transaction_id,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_term,
+        utm_content,
+        utm_id,
+        fbclid,
+        gclid,
+        msclkid,
+        referrer,
+        landing_page,
+        customer_email,
+        customer_phone,
+        customer_name,
+        ip_address,
+        user_agent
+    } = req.body;
+
+    if (!session_id) {
+        return res.status(400).json({ error: 'session_id is required' });
+    }
+
+    // Insert or update UTM data
+    const stmt = db.prepare(`INSERT OR REPLACE INTO utm_sessions (
+        session_id, transaction_id, utm_source, utm_medium, utm_campaign,
+        utm_term, utm_content, utm_id, fbclid, gclid, msclkid,
+        referrer, landing_page, customer_email, customer_phone, customer_name,
+        ip_address, user_agent, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+    stmt.run([
+        session_id, transaction_id, utm_source, utm_medium, utm_campaign,
+        utm_term, utm_content, utm_id, fbclid, gclid, msclkid,
+        referrer, landing_page, customer_email, customer_phone, customer_name,
+        ip_address, user_agent, formatSaoPauloDate()
+    ], function(err) {
+        if (err) {
+            console.error('Error storing UTM data:', err);
+            return res.status(500).json({ error: 'Failed to store UTM data' });
+        }
+
+        console.log(`✅ UTM data stored for session: ${session_id}`);
+        res.json({ success: true, id: this.lastID });
+    });
+});
+
+// Get UTM data by session_id or transaction_id
+app.get('/api/get-utm/:identifier', (req, res) => {
+    const identifier = req.params.identifier;
+    
+    // Try to find by session_id first, then by transaction_id
+    db.get(`SELECT * FROM utm_sessions WHERE session_id = ? OR transaction_id = ? ORDER BY updated_at DESC LIMIT 1`, 
+        [identifier, identifier], (err, row) => {
+        if (err) {
+            console.error('Error retrieving UTM data:', err);
+            return res.status(500).json({ error: 'Failed to retrieve UTM data' });
+        }
+
+        if (!row) {
+            return res.status(404).json({ error: 'UTM data not found' });
+        }
+
+        res.json({ success: true, data: row });
+    });
+});
+
 // 404 handler for all dashboard routes (completely removed for performance)
 app.get(['/admin', '/dashboard*', '/admin-dashboard', '/remarketing-dashboard', '/api/stats', '/api/leads', '/api/sales', '/api/analytics/*'], (req, res) => {
     res.status(404).json({ error: 'Dashboard services removed for performance optimization' });

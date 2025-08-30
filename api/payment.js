@@ -361,6 +361,97 @@ app.post('/webhook', async (req, res) => {
                 });
                 
                 console.log('✅ Sale registered in analytics:', analyticsResponse.data);
+                
+                // Send automatic Purchase event to Facebook
+                try {
+                    // Get UTM data for this transaction/session
+                    const utmResponse = await axios.get(`http://localhost:3001/api/get-utm/${sessionId}`, {
+                        timeout: 3000
+                    });
+                    
+                    if (utmResponse.data.success) {
+                        const utmData = utmResponse.data.data;
+                        console.log('📍 UTM data retrieved for Facebook:', {
+                            session_id: sessionId,
+                            utm_source: utmData.utm_source,
+                            utm_campaign: utmData.utm_campaign
+                        });
+                        
+                        // Send Purchase event to Facebook
+                        const facebookResponse = await axios.post('http://localhost:3001/api/track-purchase', {
+                            transactionId: transaction_id,
+                            value: parseFloat(amount),
+                            currency: 'BRL',
+                            customerData: {
+                                email: customer?.email || utmData.customer_email,
+                                phone: customer?.phone || utmData.customer_phone,
+                                firstName: customer?.name?.split(' ')[0] || utmData.customer_name?.split(' ')[0],
+                                lastName: customer?.name?.split(' ').slice(1).join(' ') || utmData.customer_name?.split(' ').slice(1).join(' '),
+                                city: customer?.city || '',
+                                state: customer?.state || '',
+                                country: 'BR',
+                                zipCode: customer?.zipcode || ''
+                            },
+                            utmData: {
+                                utm_source: utmData.utm_source,
+                                utm_medium: utmData.utm_medium,
+                                utm_campaign: utmData.utm_campaign,
+                                utm_term: utmData.utm_term,
+                                utm_content: utmData.utm_content,
+                                fbclid: utmData.fbclid,
+                                gclid: utmData.gclid
+                            },
+                            eventSourceUrl: utmData.landing_page || 'https://descubra-zap.top',
+                            userAgent: utmData.user_agent || 'Unknown'
+                        }, {
+                            timeout: 10000
+                        });
+                        
+                        console.log('🎯 Facebook Purchase event sent successfully:', {
+                            transaction_id,
+                            amount: parseFloat(amount),
+                            facebook_response: facebookResponse.data
+                        });
+                    } else {
+                        console.warn('⚠️ No UTM data found for session:', sessionId);
+                        
+                        // Send Purchase event without UTM data as fallback
+                        const facebookResponse = await axios.post('http://localhost:3001/api/track-purchase', {
+                            transactionId: transaction_id,
+                            value: parseFloat(amount),
+                            currency: 'BRL',
+                            customerData: {
+                                email: customer?.email,
+                                phone: customer?.phone,
+                                firstName: customer?.name?.split(' ')[0],
+                                lastName: customer?.name?.split(' ').slice(1).join(' '),
+                                country: 'BR'
+                            },
+                            utmData: {
+                                utm_source: 'webhook',
+                                utm_medium: 'payment',
+                                utm_campaign: 'direct_purchase'
+                            },
+                            eventSourceUrl: 'https://descubra-zap.top'
+                        }, {
+                            timeout: 10000
+                        });
+                        
+                        console.log('🎯 Facebook Purchase event sent (fallback):', {
+                            transaction_id,
+                            amount: parseFloat(amount),
+                            facebook_response: facebookResponse.data
+                        });
+                    }
+                } catch (facebookError) {
+                    console.error('❌ Failed to send Facebook Purchase event:', {
+                        error: facebookError.message,
+                        transaction_id,
+                        session_id: sessionId,
+                        status: facebookError.response?.status,
+                        data: facebookError.response?.data
+                    });
+                }
             } catch (analyticsError) {
                 console.error('❌ Failed to register sale in analytics:', {
                     error: analyticsError.message,
