@@ -314,8 +314,25 @@ app.post('/webhook', async (req, res) => {
     try {
         console.log('📨 Webhook received:', req.body);
         
-        // Process the webhook
-        const { transaction_id, status, amount, customer, external_id } = req.body;
+        // Process the webhook - handle both direct format and nested data format
+        let transaction_id, status, amount, customer, external_id;
+        
+        if (req.body.data) {
+            // Handle nested data format (from test scripts)
+            const data = req.body.data;
+            transaction_id = data.id;
+            status = data.status;
+            amount = data.amount;
+            customer = data.customer;
+            external_id = data.external_id;
+        } else {
+            // Handle direct format (from real webhooks)
+            transaction_id = req.body.transaction_id || req.body.id;
+            status = req.body.status;
+            amount = req.body.amount;
+            customer = req.body.customer;
+            external_id = req.body.external_id;
+        }
         
         // Always cache the payment status for future status checks
         if (transaction_id && status) {
