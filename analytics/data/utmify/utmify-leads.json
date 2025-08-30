@@ -1,0 +1,78 @@
+[
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-api-key": "demo-key",
+      "user-agent": "FunilSpy-UTMify-Integration/1.0"
+    },
+    "body": {
+      "event_type": "lead_captured",
+      "timestamp": "2025-08-30T00:08:18.826Z",
+      "session_id": "test123"
+    },
+    "customer": {
+      "id": "customer_1756512498826_8nsq1vr8j",
+      "name": "Test User",
+      "email": "test@test.com",
+      "phone": "",
+      "document": "",
+      "address": {
+        "street": "",
+        "city": "",
+        "state": "",
+        "zipcode": "",
+        "country": "BR"
+      },
+      "metadata": {
+        "lead_score": 0,
+        "lead_level": "cold",
+        "completeness": 0,
+        "ip_address": "",
+        "user_agent": ""
+      }
+    },
+    "product": {
+      "id": "default-product",
+      "name": "Produto Principal",
+      "description": "",
+      "price": 0,
+      "currency": "BRL",
+      "category": "digital",
+      "sku": "",
+      "metadata": {
+        "funnel_step": "checkout",
+        "page_url": "http://test.com",
+        "page_title": ""
+      }
+    },
+    "trackingParameters": {
+      "utm_source": "test",
+      "utm_medium": "none",
+      "utm_campaign": "organic",
+      "utm_term": "",
+      "utm_content": "",
+      "utm_id": "",
+      "gclid": "",
+      "fbclid": "",
+      "msclkid": "",
+      "referrer": "direct",
+      "landing_page": "http://test.com",
+      "device_type": "desktop",
+      "browser": "Unknown",
+      "os": "Unknown",
+      "session_duration": 0,
+      "page_views": 1,
+      "is_returning_visitor": false
+    },
+    "commission": {
+      "affiliate_id": "",
+      "affiliate_name": "",
+      "commission_rate": 0,
+      "commission_amount": 0,
+      "commission_type": "percentage",
+      "payout_method": "automatic"
+    },
+    "saved_at": "2025-08-30T00:08:18.827Z",
+    "id": "customer_1756512498827_whiylra9v"
+  }
+]
